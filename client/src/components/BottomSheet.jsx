@@ -67,7 +67,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end items-center">
+    <div className="fixed inset-0 z-[100] flex flex-col justify-end items-center">
       {/* 배경 오버레이 */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
@@ -75,7 +75,6 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
       <div
         className="relative w-full max-w-[480px] bg-white rounded-t-2xl flex flex-col"
         style={{
-          maxHeight: '80vh',
           transform: `translateY(${translateY}px)`,
           transition: dragging.current ? 'none' : 'transform 0.25s ease',
         }}
@@ -106,8 +105,12 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
         {/* 스크롤 콘텐츠 — 드래그와 완전 분리 */}
         <div
           ref={contentRef}
-          className="overflow-y-auto flex-1 p-4"
-          style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+          className="overflow-y-auto p-4"
+          style={{
+            maxHeight: 'calc(80vh - 80px)',
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
+          }}
         >
           {children}
         </div>
