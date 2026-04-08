@@ -52,23 +52,23 @@ async function main() {
 
   // 관리자 계정 생성
   const adminEmail = process.env.ADMIN_EMAIL
-  const adminPassword = process.env.ADMIN_PASSWORD
+  const adminPin = process.env.ADMIN_PIN
 
-  if (!adminEmail || !adminPassword) {
-    console.error('.env에 ADMIN_EMAIL, ADMIN_PASSWORD가 없습니다.')
+  if (!adminEmail || !adminPin) {
+    console.error('.env에 ADMIN_EMAIL, ADMIN_PIN이 없습니다.')
     return
   }
 
-  const hashed = await bcrypt.hash(adminPassword, 10)
+  const hashed = await bcrypt.hash(adminPin, 10)
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: { password: hashed },
     create: {
       email: adminEmail,
       password: hashed,
     },
   })
-  console.log(`관리자 계정 생성 완료: ${admin.email}`)
+  console.log(`관리자 계정 생성/업데이트 완료: ${admin.email}`)
 
   // 관리자 기본 계좌 생성
   const existingAccounts = await prisma.account.count({ where: { userId: admin.id } })

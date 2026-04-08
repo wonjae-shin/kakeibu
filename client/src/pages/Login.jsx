@@ -1,79 +1,108 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '@/store/authStore.js'
+
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
 export default function Login() {
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState(false)
+  const [shake, setShake] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+  const handleKey = (key) => {
+    if (loading) return
+    if (key === 'del') {
+      setPin((p) => p.slice(0, -1))
+      setError(false)
+      return
+    }
+    if (key === '') return
+    if (pin.length >= 4) return
+    const next = pin + key
+    setPin(next)
+    setError(false)
+    if (next.length === 4) {
+      submitPin(next)
+    }
+  }
+
+  const submitPin = async (value) => {
     setLoading(true)
     try {
-      await login(email, password)
+      await login(value)
       navigate('/', { replace: true })
-    } catch (err) {
-      setError(
-        err.response?.data?.message || '로그인에 실패했습니다. 다시 시도해주세요.'
-      )
-    } finally {
-      setLoading(false)
+    } catch {
+      setError(true)
+      setShake(true)
+      setTimeout(() => {
+        setShake(false)
+        setPin('')
+        setError(false)
+        setLoading(false)
+      }, 600)
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 select-none">
       {/* 로고 */}
-      <div className="mb-10 text-center">
+      <div className="mb-12 text-center">
         <div className="text-5xl mb-3">💰</div>
         <h1 className="text-2xl font-bold text-gray-900">가계부</h1>
-        <p className="text-sm text-gray-500 mt-1">스마트한 지출 관리</p>
+        <p className="text-sm text-gray-400 mt-1">PIN을 입력해주세요</p>
       </div>
 
-      {/* 로그인 폼 */}
-      <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="이메일을 입력하세요"
-            required
-            autoComplete="email"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+      {/* PIN 도트 */}
+      <div className={`flex gap-5 mb-12 ${shake ? 'animate-shake' : ''}`}>
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
+              error
+                ? 'bg-expense border-expense'
+                : pin.length > i
+                ? 'bg-primary border-primary scale-110'
+                : 'bg-transparent border-gray-300'
+            }`}
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="비밀번호를 입력하세요"
-            required
-            autoComplete="current-password"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-        </div>
+        ))}
+      </div>
 
+      {/* 에러 메시지 */}
+      <div className="h-5 mb-6">
         {error && (
-          <p className="text-sm text-expense text-center">{error}</p>
+          <p className="text-sm text-expense text-center">PIN이 올바르지 않습니다</p>
         )}
+      </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-2 w-full py-3 rounded-xl bg-primary text-white font-semibold text-sm disabled:opacity-50 active:opacity-80 transition-opacity"
-        >
-          {loading ? '로그인 중...' : '로그인'}
-        </button>
-      </form>
+      {/* 키패드 */}
+      <div className="grid grid-cols-3 gap-3 w-72">
+        {KEYS.map((key, i) => (
+          <button
+            key={i}
+            onClick={() => handleKey(key)}
+            disabled={key === ''}
+            className={`h-16 rounded-2xl text-2xl font-medium transition-all active:scale-95 ${
+              key === ''
+                ? 'invisible'
+                : key === 'del'
+                ? 'bg-gray-100 text-gray-500 active:bg-gray-200'
+                : 'bg-white shadow-sm text-gray-900 active:bg-gray-100'
+            }`}
+          >
+            {key === 'del' ? (
+              <span className="flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
+                </svg>
+              </span>
+            ) : key}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

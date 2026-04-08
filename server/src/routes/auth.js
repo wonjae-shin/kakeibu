@@ -10,19 +10,20 @@ const prisma = new PrismaClient()
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: '이메일과 비밀번호를 입력해주세요.' })
+    const { pin } = req.body
+    if (!pin) {
+      return res.status(400).json({ success: false, message: 'PIN을 입력해주세요.' })
     }
 
+    const email = process.env.ADMIN_EMAIL
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
-      return res.status(401).json({ success: false, message: '이메일 또는 비밀번호가 올바르지 않습니다.' })
+      return res.status(401).json({ success: false, message: 'PIN이 올바르지 않습니다.' })
     }
 
-    const valid = await bcrypt.compare(password, user.password)
+    const valid = await bcrypt.compare(pin, user.password)
     if (!valid) {
-      return res.status(401).json({ success: false, message: '이메일 또는 비밀번호가 올바르지 않습니다.' })
+      return res.status(401).json({ success: false, message: 'PIN이 올바르지 않습니다.' })
     }
 
     const accessToken = jwt.sign(

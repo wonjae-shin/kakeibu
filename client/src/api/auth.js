@@ -1,7 +1,7 @@
 import api from './instance.js'
 
-export const login = (email, password) =>
-  api.post('/auth/login', { email, password }).then((r) => r.data)
+export const login = (pin) =>
+  api.post('/auth/login', { pin }).then((r) => r.data)
 
 export const logout = () =>
   api.post('/auth/logout').then((r) => r.data)
