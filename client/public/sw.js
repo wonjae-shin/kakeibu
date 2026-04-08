@@ -1,4 +1,4 @@
-const CACHE = 'kakeibu-v1'
+const CACHE = 'kakeibu-v2'
 const STATIC = [
   '/',
   '/index.html',
