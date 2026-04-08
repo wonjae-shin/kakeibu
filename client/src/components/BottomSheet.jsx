@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 
 export default function BottomSheet({ isOpen, onClose, title, children }) {
-  const sheetRef = useRef(null)
   const contentRef = useRef(null)
   const dragStartY = useRef(null)
-  const dragStartScrollTop = useRef(0)
   const [translateY, setTranslateY] = useState(0)
-  const isDragging = useRef(false)
+  const dragging = useRef(false)
 
-  // body 스크롤 잠금 (iOS 대응: position fixed 사용)
+  // body 스크롤 잠금 (iOS 대응: position fixed 방식)
   useEffect(() => {
     if (isOpen) {
       const scrollY = window.scrollY
@@ -16,11 +14,11 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
       document.body.style.top = `-${scrollY}px`
       document.body.style.width = '100%'
     } else {
-      const scrollY = document.body.style.top
+      const top = document.body.style.top
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
-      if (scrollY) window.scrollTo(0, -parseInt(scrollY || '0'))
+      if (top) window.scrollTo(0, -parseInt(top))
       setTranslateY(0)
     }
     return () => {
@@ -30,33 +28,21 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
     }
   }, [isOpen])
 
-  // 드래그 투 클로즈
-  const onTouchStart = (e) => {
-    const content = contentRef.current
-    // 콘텐츠 영역 스크롤이 상단에 있을 때만 드래그 허용
-    if (content && content.scrollTop > 0) return
-    dragStartY.current = e.touches[0].clientY
-    dragStartScrollTop.current = content ? content.scrollTop : 0
-    isDragging.current = true
+  const startDrag = (clientY) => {
+    dragStartY.current = clientY
+    dragging.current = true
   }
 
-  const onTouchMove = (e) => {
-    if (!isDragging.current || dragStartY.current === null) return
-    const content = contentRef.current
-    const dy = e.touches[0].clientY - dragStartY.current
-
-    // 아래로 드래그 + 콘텐츠 스크롤이 상단일 때만 시트 이동
-    if (dy > 0 && (!content || content.scrollTop === 0)) {
-      e.preventDefault()
-      setTranslateY(dy)
-    }
+  const moveDrag = (clientY) => {
+    if (!dragging.current) return
+    const dy = clientY - dragStartY.current
+    if (dy > 0) setTranslateY(dy)
   }
 
-  const onTouchEnd = () => {
-    if (!isDragging.current) return
-    isDragging.current = false
-    const dy = translateY
-    if (dy > 100) {
+  const endDrag = () => {
+    if (!dragging.current) return
+    dragging.current = false
+    if (translateY > 100) {
       onClose()
     } else {
       setTranslateY(0)
@@ -64,32 +50,48 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
     dragStartY.current = null
   }
 
+  // 터치
+  const onHandleTouchStart = (e) => startDrag(e.touches[0].clientY)
+  const onHandleTouchMove = (e) => { e.preventDefault(); moveDrag(e.touches[0].clientY) }
+  const onHandleTouchEnd = () => endDrag()
+
+  // 마우스 (PC 테스트용)
+  const onHandleMouseDown = (e) => {
+    startDrag(e.clientY)
+    const onMove = (ev) => moveDrag(ev.clientY)
+    const onUp = () => { endDrag(); window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end items-center">
       {/* 배경 오버레이 */}
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+
       {/* 시트 본문 */}
       <div
-        ref={sheetRef}
         className="relative w-full max-w-[480px] bg-white rounded-t-2xl flex flex-col"
         style={{
           maxHeight: '80vh',
           transform: `translateY(${translateY}px)`,
-          transition: isDragging.current ? 'none' : 'transform 0.2s ease',
+          transition: dragging.current ? 'none' : 'transform 0.25s ease',
         }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
       >
-        {/* 핸들 */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0 cursor-grab">
+        {/* 핸들 — 드래그 전용 영역 */}
+        <div
+          className="flex justify-center pt-3 pb-2 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
+          onMouseDown={onHandleMouseDown}
+          onTouchStart={onHandleTouchStart}
+          onTouchMove={onHandleTouchMove}
+          onTouchEnd={onHandleTouchEnd}
+        >
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
+
+        {/* 타이틀 */}
         {title && (
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
             <h2 className="text-base font-semibold text-gray-900">{title}</h2>
@@ -100,6 +102,8 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
             </button>
           </div>
         )}
+
+        {/* 스크롤 콘텐츠 — 드래그와 완전 분리 */}
         <div
           ref={contentRef}
           className="overflow-y-auto flex-1 p-4"
