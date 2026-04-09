@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getTransactions, deleteTransaction } from '@/api/transactions.js'
 import { getCategories } from '@/api/categories.js'
 import TransactionItem from '@/components/TransactionItem.jsx'
@@ -11,7 +11,13 @@ import { currentMonth, formatAmount, formatDate } from '@/utils/format.js'
 
 export default function Transactions() {
   const navigate = useNavigate()
-  const [month, setMonth] = useState(currentMonth())
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [month, setMonth] = useState(searchParams.get('month') || currentMonth())
+
+  const changeMonth = (m) => {
+    setMonth(m)
+    setSearchParams({ month: m }, { replace: true })
+  }
   const [transactions, setTransactions] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,9 +25,18 @@ export default function Transactions() {
 
   // 필터
   const [filterType, setFilterType] = useState('all') // all | income | expense
-  const [filterCategory, setFilterCategory] = useState('')
+  const [filterCategories, setFilterCategories] = useState(new Set()) // 다중선택
   const [search, setSearch] = useState('')
   const [filterSheet, setFilterSheet] = useState(false)
+
+  const toggleFilterCategory = (id) => {
+    setFilterCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   // 삭제 확인
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -32,7 +47,6 @@ export default function Transactions() {
     try {
       const params = { month }
       if (filterType !== 'all') params.type = filterType
-      if (filterCategory) params.category = filterCategory
       if (search) params.search = search
       const [txRes, catRes] = await Promise.all([
         getTransactions(params),
@@ -45,12 +59,17 @@ export default function Transactions() {
     } finally {
       setLoading(false)
     }
-  }, [month, filterType, filterCategory, search])
+  }, [month, filterType, search])
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  // 카테고리 다중 필터 (클라이언트)
+  const filteredTx = filterCategories.size > 0
+    ? transactions.filter((tx) => filterCategories.has(tx.categoryId))
+    : transactions
+
   // 날짜별 그룹핑
-  const grouped = transactions.reduce((acc, tx) => {
+  const grouped = filteredTx.reduce((acc, tx) => {
     const key = tx.date
     if (!acc[key]) acc[key] = []
     acc[key].push(tx)
@@ -58,9 +77,9 @@ export default function Transactions() {
   }, {})
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 
-  // 월 합계
-  const income = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-  const expense = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  // 월 합계 (필터 적용 기준)
+  const income = filteredTx.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const expense = filteredTx.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -74,14 +93,14 @@ export default function Transactions() {
     }
   }
 
-  const activeFilterCount = [filterType !== 'all', filterCategory !== ''].filter(Boolean).length
+  const activeFilterCount = [filterType !== 'all', filterCategories.size > 0].filter(Boolean).length
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* 헤더 */}
-      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 shadow-sm">
+      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 border-b border-gray-100">
         <div className="flex items-center justify-between mt-2 mb-3">
-          <MonthPicker month={month} onChange={(m) => { setMonth(m); setFilterType('all'); setFilterCategory('') }} />
+          <MonthPicker month={month} onChange={(m) => { changeMonth(m); setFilterType('all'); setFilterCategories(new Set()) }} />
           <button
             onClick={() => setFilterSheet(true)}
             className="relative flex items-center gap-1 text-sm text-gray-500 px-3 py-1.5 rounded-lg bg-gray-100"
@@ -168,7 +187,7 @@ export default function Transactions() {
           <span className="font-semibold text-expense">-{formatAmount(expense)}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-400">잔액</span>
+          <span className="text-gray-400">결산</span>
           <span className={`font-semibold ${income - expense >= 0 ? 'text-income' : 'text-expense'}`}>
             {(income - expense) >= 0 ? '+' : ''}{formatAmount(income - expense)}
           </span>
@@ -185,7 +204,7 @@ export default function Transactions() {
               {[['all', '전체'], ['expense', '지출'], ['income', '수입']].map(([val, label]) => (
                 <button
                   key={val}
-                  onClick={() => setFilterType(val)}
+                  onClick={() => { setFilterType(val); setFilterCategories(new Set()) }}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     filterType === val
                       ? 'border-primary bg-primary/5 text-primary'
@@ -198,24 +217,30 @@ export default function Transactions() {
             </div>
           </div>
 
-          {/* 카테고리 필터 */}
+          {/* 카테고리 필터 — 다중선택 */}
           <div>
-            <p className="text-xs font-medium text-gray-400 mb-2">카테고리</p>
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                onClick={() => setFilterCategory('')}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl border text-xs ${
-                  filterCategory === '' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-100 text-gray-500'
-                }`}
-              >
-                <span className="text-xl">🗂</span>전체
-              </button>
-              {categories.map((cat) => (
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-gray-400">카테고리 (복수 선택 가능)</p>
+              {filterCategories.size > 0 && (
+                <button
+                  onClick={() => setFilterCategories(new Set())}
+                  className="text-xs text-gray-400 underline"
+                >
+                  초기화
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-0.5">
+              {categories.filter((c) =>
+                filterType === 'all' || c.type === filterType || c.type === 'both'
+              ).map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => setFilterCategory(cat.id)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border text-xs ${
-                    filterCategory === cat.id ? 'border-primary bg-primary/5 text-primary' : 'border-gray-100 text-gray-500'
+                  onClick={() => toggleFilterCategory(cat.id)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border text-xs transition-colors ${
+                    filterCategories.has(cat.id)
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-gray-100 text-gray-500'
                   }`}
                 >
                   <span className="text-xl">{cat.icon}</span>

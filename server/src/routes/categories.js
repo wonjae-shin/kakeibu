@@ -29,6 +29,10 @@ router.post('/', async (req, res) => {
     if (!name || !type || !icon || !color) {
       return res.status(400).json({ success: false, message: '모든 필드를 입력해주세요.' })
     }
+    const userCatCount = await prisma.category.count({ where: { userId: req.user.userId } })
+    if (userCatCount >= 30) {
+      return res.status(400).json({ success: false, message: '카테고리는 최대 30개까지 추가할 수 있습니다.' })
+    }
     const category = await prisma.category.create({
       data: { name, type, icon, color, userId: req.user.userId },
     })

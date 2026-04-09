@@ -27,6 +27,10 @@ router.post('/', async (req, res) => {
     if (!name || !type) {
       return res.status(400).json({ success: false, message: '이름과 타입을 입력해주세요.' })
     }
+    const accCount = await prisma.account.count({ where: { userId: req.user.userId } })
+    if (accCount >= 20) {
+      return res.status(400).json({ success: false, message: '계좌는 최대 20개까지 추가할 수 있습니다.' })
+    }
     const account = await prisma.account.create({
       data: { name, type, balance: balance ?? 0, userId: req.user.userId },
     })

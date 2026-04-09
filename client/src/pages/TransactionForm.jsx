@@ -95,7 +95,7 @@ export default function TransactionForm() {
   return (
     <div className="bg-gray-50">
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-4 pb-4 pt-safe bg-white sticky top-0 z-10">
+      <div className="flex items-center justify-between px-4 pb-3 pt-safe bg-white sticky top-0 z-10 border-b border-gray-100">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -216,20 +216,20 @@ export default function TransactionForm() {
         </div>
 
         {/* 정기지출 */}
-        <div className="flex items-center justify-between px-4 py-4">
-          <div>
+        <div className="flex items-center gap-3 px-4 py-4">
+          <div className="flex-1 min-w-0">
             <span className="text-sm text-gray-700">정기지출</span>
             <p className="text-xs text-gray-400 mt-0.5">매월 반복 거래로 등록</p>
           </div>
           <button
             onClick={() => setIsRecurring(!isRecurring)}
-            className={`flex-shrink-0 w-12 h-6 rounded-full transition-colors relative ${
+            className={`shrink-0 w-12 h-6 rounded-full transition-colors relative overflow-hidden ${
               isRecurring ? 'bg-primary' : 'bg-gray-200'
             }`}
           >
             <span
-              className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                isRecurring ? 'translate-x-6' : 'translate-x-0.5'
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                isRecurring ? 'translate-x-6' : 'translate-x-0'
               }`}
             />
           </button>

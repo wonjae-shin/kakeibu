@@ -7,6 +7,82 @@ const prisma = new PrismaClient()
 
 router.use(authMiddleware)
 
+// POST /api/transactions/generate-recurring?month=YYYY-MM
+// 해당 월에 아직 복사되지 않은 isRecurring 거래를 이전 달에서 복사 생성
+router.post('/generate-recurring', async (req, res) => {
+  try {
+    const userId = req.user.userId
+    // month 파라미터 없으면 현재 월 사용
+    const month = req.query.month || new Date().toISOString().slice(0, 7)
+
+    // 이전 달 계산
+    const [year, mon] = month.split('-').map(Number)
+    const prevDate = new Date(year, mon - 2, 1)
+    const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+
+    // 이전 달의 isRecurring 거래 조회
+    const prevRecurring = await prisma.transaction.findMany({
+      where: {
+        userId,
+        isRecurring: true,
+        date: { startsWith: prevMonth },
+      },
+    })
+
+    if (prevRecurring.length === 0) {
+      return res.json({ success: true, data: [], message: '복사할 정기 거래가 없습니다.' })
+    }
+
+    // 현재 월에 이미 생성된 정기 거래 확인 (date + categoryId + accountId + amount 조합으로 중복 방지)
+    const existingRecurring = await prisma.transaction.findMany({
+      where: {
+        userId,
+        isRecurring: true,
+        date: { startsWith: month },
+      },
+    })
+
+    const existingKeys = new Set(
+      existingRecurring.map((t) => `${t.categoryId}-${t.accountId}-${t.amount}-${t.type}`)
+    )
+
+    const toCreate = prevRecurring.filter((t) => {
+      const key = `${t.categoryId}-${t.accountId}-${t.amount}-${t.type}`
+      return !existingKeys.has(key)
+    })
+
+    if (toCreate.length === 0) {
+      return res.json({ success: true, data: [], message: '이미 생성된 정기 거래입니다.' })
+    }
+
+    // 날짜: 이전 달의 일(day)을 그대로 유지하되, 현재 월로 변경 (말일 초과 시 말일로)
+    const daysInMonth = new Date(year, mon, 0).getDate()
+    const created = await Promise.all(
+      toCreate.map((t) => {
+        const originalDay = parseInt(t.date.split('-')[2])
+        const day = Math.min(originalDay, daysInMonth)
+        const newDate = `${month}-${String(day).padStart(2, '0')}`
+        return prisma.transaction.create({
+          data: {
+            type: t.type,
+            amount: t.amount,
+            memo: t.memo,
+            date: newDate,
+            categoryId: t.categoryId,
+            accountId: t.accountId,
+            isRecurring: true,
+            userId,
+          },
+        })
+      })
+    )
+
+    res.json({ success: true, data: created, message: `${created.length}건의 정기 거래가 생성되었습니다.` })
+  } catch (err) {
+    res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
+  }
+})
+
 // GET /api/transactions/summary?month=YYYY-MM
 // summary는 /transactions/:id 보다 앞에 등록해야 라우팅 충돌 없음
 router.get('/summary', async (req, res) => {

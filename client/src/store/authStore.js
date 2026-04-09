@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { login as apiLogin, logout as apiLogout, getMe } from '@/api/auth.js'
+import { generateRecurring } from '@/api/transactions.js'
 
 const useAuthStore = create((set, get) => ({
   user: null,
@@ -13,6 +14,8 @@ const useAuthStore = create((set, get) => ({
     localStorage.setItem('refreshToken', refreshToken)
     const meRes = await getMe()
     set({ user: meRes.data, isAuthenticated: true })
+    // 로그인 후 이번 달 정기 거래 자동 생성
+    try { await generateRecurring() } catch {}
   },
 
   logout: async () => {
@@ -34,6 +37,8 @@ const useAuthStore = create((set, get) => ({
     try {
       const res = await getMe()
       set({ user: res.data, isAuthenticated: true, isLoading: false })
+      // 앱 재진입 시 이번 달 정기 거래 자동 생성
+      try { await generateRecurring() } catch {}
     } catch {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')

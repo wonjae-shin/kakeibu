@@ -67,10 +67,18 @@ async function main() {
 
   // ── 계좌 생성 ──────────────────────────────────────────
   const accountDefs = [
-    { id: 'acc-cash', name: '현금', type: 'cash', balance: 150000 },
-    { id: 'acc-check', name: '체크카드', type: 'card', balance: 1230000 },
-    { id: 'acc-credit', name: '신용카드', type: 'card', balance: 0 },
-    { id: 'acc-bank', name: '카카오뱅크', type: 'bank', balance: 3800000 },
+    { id: 'acc-cash',    name: '현금',       type: 'cash', balance: 150000 },
+    { id: 'acc-check',   name: '체크카드',    type: 'card', balance: 1230000 },
+    { id: 'acc-credit',  name: '신용카드',    type: 'card', balance: 0 },
+    { id: 'acc-bank',    name: '카카오뱅크',  type: 'bank', balance: 3800000 },
+    { id: 'acc-bank2',   name: '토스뱅크',    type: 'bank', balance: 520000 },
+    { id: 'acc-bank3',   name: '신한은행',    type: 'bank', balance: 1200000 },
+    { id: 'acc-card2',   name: '삼성카드',    type: 'card', balance: 0 },
+    { id: 'acc-card3',   name: '현대카드',    type: 'card', balance: 0 },
+    { id: 'acc-card4',   name: '롯데카드',    type: 'card', balance: 0 },
+    { id: 'acc-bank4',   name: '하나은행',    type: 'bank', balance: 750000 },
+    { id: 'acc-bank5',   name: '국민은행',    type: 'bank', balance: 200000 },
+    { id: 'acc-cash2',   name: '여행용 현금', type: 'cash', balance: 80000 },
   ]
   for (const acc of accountDefs) {
     await prisma.account.upsert({
@@ -80,6 +88,32 @@ async function main() {
     })
   }
   console.log(`계좌 ${accountDefs.length}개 생성 완료`)
+
+  // ── 사용자 커스텀 카테고리 ──────────────────────────────
+  const customCategories = [
+    { id: 'cat-pet',      name: '반려동물',   type: 'expense', icon: '🐶', color: '#F59E0B' },
+    { id: 'cat-beauty',   name: '뷰티/미용',  type: 'expense', icon: '💇', color: '#EC4899' },
+    { id: 'cat-fitness',  name: '운동/헬스',  type: 'expense', icon: '🏋️', color: '#10B981' },
+    { id: 'cat-travel',   name: '여행',       type: 'expense', icon: '✈️', color: '#3B82F6' },
+    { id: 'cat-edu',      name: '교육/도서',  type: 'expense', icon: '🎓', color: '#8B5CF6' },
+    { id: 'cat-game',     name: '게임',       type: 'expense', icon: '🎮', color: '#6366F1' },
+    { id: 'cat-drink',    name: '술/유흥',    type: 'expense', icon: '🍺', color: '#EF4444' },
+    { id: 'cat-car',      name: '자동차',     type: 'expense', icon: '🚗', color: '#6B7280' },
+    { id: 'cat-gift',     name: '선물/경조사', type: 'expense', icon: '🎀', color: '#F97316' },
+    { id: 'cat-invest',   name: '투자',       type: 'income',  icon: '📈', color: '#22C55E' },
+    { id: 'cat-rental',   name: '임대수입',   type: 'income',  icon: '🏢', color: '#14B8A6' },
+    { id: 'cat-baby',     name: '육아',       type: 'expense', icon: '👶', color: '#FCA5A5' },
+    { id: 'cat-home',     name: '가구/인테리어', type: 'expense', icon: '🛋️', color: '#A78BFA' },
+    { id: 'cat-snack',    name: '야식',       type: 'expense', icon: '🍜', color: '#FBBF24' },
+  ]
+  for (const cat of customCategories) {
+    await prisma.category.upsert({
+      where: { id: cat.id },
+      update: {},
+      create: { ...cat, isDefault: false, userId: admin.id },
+    })
+  }
+  console.log(`커스텀 카테고리 ${customCategories.length}개 생성 완료`)
 
   // ── 거래 내역 ──────────────────────────────────────────
   // 기존 거래 삭제 후 재생성 (중복 방지)

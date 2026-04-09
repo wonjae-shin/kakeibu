@@ -130,9 +130,9 @@ export default function Budget() {
   return (
     <div className="pb-4">
       {/* 헤더 */}
-      <div className="bg-white px-4 pb-4 pt-safe sticky top-0 z-10 shadow-sm">
+      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 border-b border-gray-100">
         <div className="flex items-center justify-between mt-2">
-          <h1 className="text-xl font-bold text-gray-900">예산 관리</h1>
+          <h1 className="text-lg font-bold text-gray-900">예산</h1>
           <MonthPicker month={month} onChange={setMonth} />
         </div>
       </div>

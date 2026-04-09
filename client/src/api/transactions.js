@@ -17,3 +17,6 @@ export const updateTransaction = (id, data) =>
 
 export const deleteTransaction = (id) =>
   api.delete(`/transactions/${id}`).then((r) => r.data)
+
+export const generateRecurring = (month) =>
+  api.post('/transactions/generate-recurring', null, { params: { month } }).then((r) => r.data)

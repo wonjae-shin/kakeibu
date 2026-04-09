@@ -125,17 +125,13 @@ export default function Settings() {
   return (
     <div className="pb-4">
       {/* 헤더 */}
-      <div className="bg-white px-4 pb-4 pt-safe sticky top-0 z-10 shadow-sm">
-        <h1 className="text-xl font-bold text-gray-900 mt-2">설정</h1>
+      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 border-b border-gray-100">
+        <h1 className="text-lg font-bold text-gray-900 mt-2">설정</h1>
       </div>
 
       <div className="px-4 mt-4 flex flex-col gap-3">
         {/* 계정 */}
-        <div className="bg-white rounded-2xl divide-y divide-gray-50 shadow-sm">
-          <div className="px-4 py-3.5">
-            <p className="text-xs text-gray-400 mb-0.5">계정</p>
-            <p className="text-sm font-medium text-gray-800">{user?.email}</p>
-          </div>
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <button
             onClick={handleLogout}
             className="w-full px-4 py-3.5 text-left text-sm text-expense font-medium"

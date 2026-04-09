@@ -71,7 +71,7 @@ export default function Dashboard() {
   return (
     <div className="pb-4">
       {/* 헤더 */}
-      <div className="bg-primary px-4 pb-6 pt-safe">
+      <div className="bg-gradient-to-br from-violet-300 via-purple-200 to-fuchsia-200 px-4 pb-6 pt-safe">
         <div className="flex items-center justify-between mt-2 mb-5">
           <MonthPicker
             month={month}
@@ -79,7 +79,7 @@ export default function Dashboard() {
           />
           <button
             onClick={() => navigate('/transactions/new')}
-            className="flex items-center gap-1.5 bg-white/20 text-white text-sm font-medium px-3 py-1.5 rounded-full"
+            className="flex items-center gap-1.5 bg-white/40 text-violet-800 text-sm font-medium px-3 py-1.5 rounded-full"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -100,18 +100,18 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="bg-white/15 rounded-2xl p-4">
-                <p className="text-white/70 text-xs mb-1">수입</p>
-                <p className="text-white text-lg font-bold">+{formatAmount(summary.income)}</p>
+              <div className="bg-white/40 rounded-2xl p-4">
+                <p className="text-violet-600 text-xs mb-1">수입</p>
+                <p className="text-violet-900 text-lg font-bold">+{formatAmount(summary.income)}</p>
               </div>
-              <div className="bg-white/15 rounded-2xl p-4">
-                <p className="text-white/70 text-xs mb-1">지출</p>
-                <p className="text-white text-lg font-bold">-{formatAmount(summary.expense)}</p>
+              <div className="bg-white/40 rounded-2xl p-4">
+                <p className="text-violet-600 text-xs mb-1">지출</p>
+                <p className="text-violet-900 text-lg font-bold">-{formatAmount(summary.expense)}</p>
               </div>
             </div>
-            <div className="bg-white/10 rounded-2xl px-4 py-3 flex items-center justify-between">
-              <span className="text-white/70 text-sm">순이익</span>
-              <span className={`text-base font-bold ${summary.income - summary.expense >= 0 ? 'text-white' : 'text-red-200'}`}>
+            <div className="bg-white/30 rounded-2xl px-4 py-3 flex items-center justify-between">
+              <span className="text-violet-600 text-sm">결산</span>
+              <span className={`text-base font-bold ${summary.income - summary.expense >= 0 ? 'text-violet-900' : 'text-rose-500'}`}>
                 {summary.income - summary.expense >= 0 ? '+' : ''}{formatAmount(summary.income - summary.expense)}
               </span>
             </div>
@@ -181,7 +181,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
             <h2 className="text-sm font-semibold text-gray-800">최근 거래</h2>
             <button
-              onClick={() => navigate('/transactions')}
+              onClick={() => navigate(`/transactions?month=${month}`)}
               className="text-xs text-primary font-medium"
             >
               전체 보기
