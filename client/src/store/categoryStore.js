@@ -10,10 +10,6 @@ const useCategoryStore = create((set) => ({
     set({ categories: res.data, isLoaded: true })
   },
 
-  getCategoriesByType: (type) => {
-    // 호출 시점에 state를 직접 가져오는 selector용이 아닌 단순 helper
-    // 컴포넌트에서 useCategoryStore(state => state.categories).filter(...) 권장
-  },
 }))
 
 export default useCategoryStore

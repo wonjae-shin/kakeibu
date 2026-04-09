@@ -4,8 +4,7 @@ import { getTransactionSummary, getTransactions } from '@/api/transactions.js'
 import { getBudgets } from '@/api/budgets.js'
 import TransactionItem from '@/components/TransactionItem.jsx'
 import MonthPicker from '@/components/MonthPicker.jsx'
-import ErrorMessage from '@/components/ErrorMessage.jsx'
-import { currentMonth, formatAmount, formatMonth } from '@/utils/format.js'
+import { currentMonth, formatAmount } from '@/utils/format.js'
 
 export default function Dashboard() {
   const navigate = useNavigate()

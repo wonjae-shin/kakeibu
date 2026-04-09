@@ -11,7 +11,7 @@ const COLORS = ['#EF4444','#F97316','#F59E0B','#22C55E','#10B981','#14B8A6','#3B
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
+  const { logout } = useAuthStore()
 
   // 섹션 토글
   const [openSection, setOpenSection] = useState(null)
@@ -435,7 +435,7 @@ export default function Settings() {
           <div className="relative bg-white rounded-2xl mx-6 p-6 w-full max-w-sm">
             <h3 className="text-base font-semibold text-gray-900 mb-2">삭제 확인</h3>
             <p className="text-sm text-gray-500 mb-5">
-              <span className="font-medium text-gray-800">"{deleteConfirm.name}"</span>을(를) 삭제하시겠습니까?
+              <span className="font-medium text-gray-800">&quot;{deleteConfirm.name}&quot;</span>을(를) 삭제하시겠습니까?
             </p>
             <div className="flex gap-2">
               <button
