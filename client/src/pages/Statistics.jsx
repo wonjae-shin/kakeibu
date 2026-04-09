@@ -65,8 +65,8 @@ export default function Statistics() {
   return (
     <div className="pb-4">
       {/* 헤더 */}
-      <div className="bg-white px-4 pt-12 pb-4 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-lg font-bold text-gray-900">통계</h1>
+      <div className="bg-white px-4 pb-4 pt-safe sticky top-0 z-10 shadow-sm">
+        <h1 className="text-xl font-bold text-gray-900 mt-2">통계</h1>
       </div>
 
       {loading ? (
@@ -83,7 +83,11 @@ export default function Statistics() {
               <h2 className="text-sm font-semibold text-gray-800">월별 수입/지출 추이</h2>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setYear((y) => y - 1)}
+                  onClick={() => {
+                    const newYear = year - 1
+                    setYear(newYear)
+                    setMonth(`${newYear}-${month.split('-')[1]}`)
+                  }}
                   className="p-1 text-gray-400 hover:text-gray-700"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -92,7 +96,11 @@ export default function Statistics() {
                 </button>
                 <span className="text-sm font-medium text-gray-700">{year}년</span>
                 <button
-                  onClick={() => setYear((y) => y + 1)}
+                  onClick={() => {
+                    const newYear = year + 1
+                    setYear(newYear)
+                    setMonth(`${newYear}-${month.split('-')[1]}`)
+                  }}
                   className="p-1 text-gray-400 hover:text-gray-700"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -134,7 +142,11 @@ export default function Statistics() {
               <h2 className="text-sm font-semibold text-gray-800">이번 달 지출 분석</h2>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setMonth((m) => addMonth(m, -1))}
+                  onClick={() => {
+                    const newMonth = addMonth(month, -1)
+                    setMonth(newMonth)
+                    setYear(parseInt(newMonth.split('-')[0]))
+                  }}
                   className="p-1 text-gray-400"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -142,10 +154,14 @@ export default function Statistics() {
                   </svg>
                 </button>
                 <span className="text-sm font-medium text-gray-700">
-                  {parseInt(month.split('-')[1])}월
+                  {month.replace('-', '년 ').replace(/^(\d+년 )0?(\d+)$/, '$1$2')}월
                 </span>
                 <button
-                  onClick={() => setMonth((m) => addMonth(m, 1))}
+                  onClick={() => {
+                    const newMonth = addMonth(month, 1)
+                    setMonth(newMonth)
+                    setYear(parseInt(newMonth.split('-')[0]))
+                  }}
                   className="p-1 text-gray-400"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

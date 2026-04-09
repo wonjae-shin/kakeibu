@@ -79,8 +79,8 @@ export default function Transactions() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* 헤더 */}
-      <div className="bg-white px-4 pt-12 pb-3 sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
+      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center justify-between mt-2 mb-3">
           <MonthPicker month={month} onChange={(m) => { setMonth(m); setFilterType('all'); setFilterCategory('') }} />
           <button
             onClick={() => setFilterSheet(true)}

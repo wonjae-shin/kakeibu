@@ -75,6 +75,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
       <div
         className="relative w-full max-w-[480px] bg-white rounded-t-2xl flex flex-col"
         style={{
+          maxHeight: '85vh',
           transform: `translateY(${translateY}px)`,
           transition: dragging.current ? 'none' : 'transform 0.25s ease',
         }}
@@ -105,9 +106,8 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
         {/* 스크롤 콘텐츠 — 드래그와 완전 분리 */}
         <div
           ref={contentRef}
-          className="overflow-y-auto p-4"
+          className="flex-1 min-h-0 overflow-y-auto p-4"
           style={{
-            maxHeight: 'calc(80vh - 80px)',
             overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch',
           }}

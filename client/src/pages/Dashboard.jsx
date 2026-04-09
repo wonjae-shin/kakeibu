@@ -71,8 +71,8 @@ export default function Dashboard() {
   return (
     <div className="pb-4">
       {/* 헤더 */}
-      <div className="bg-primary px-4 pt-12 pb-6">
-        <div className="flex items-center justify-between mb-5">
+      <div className="bg-primary px-4 pb-6 pt-safe">
+        <div className="flex items-center justify-between mt-2 mb-5">
           <MonthPicker
             month={month}
             onChange={setMonth}

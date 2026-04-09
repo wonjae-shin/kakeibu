@@ -32,31 +32,37 @@ export default function TransactionForm() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // id가 바뀔 때마다 폼 상태 초기화
+    setAmount(0)
+    setDate(today())
+    setMemo('')
+    setIsRecurring(false)
+    setError('')
+
     Promise.all([getCategories(), getAccounts()]).then(([catRes, accRes]) => {
       setCategories(catRes.data)
       setAccounts(accRes.data)
-      // 수정 모드가 아닐 때 기본값 설정
+
       if (!isEdit) {
+        // 추가 모드: 기본값 설정
+        setType('expense')
         const defaultCat = catRes.data.find((c) => c.type === 'expense')
         if (defaultCat) setCategoryId(defaultCat.id)
         if (accRes.data[0]) setAccountId(accRes.data[0].id)
+      } else {
+        // 수정 모드: 기존 거래 불러오기
+        getTransaction(id).then((res) => {
+          const tx = res.data
+          setType(tx.type)
+          setAmount(tx.amount)
+          setCategoryId(tx.categoryId)
+          setAccountId(tx.accountId)
+          setDate(tx.date)
+          setMemo(tx.memo || '')
+          setIsRecurring(tx.isRecurring)
+        }).catch(() => setError('거래 정보를 불러오지 못했습니다.'))
       }
     })
-  }, [])
-
-  // 수정 모드: 기존 거래 불러오기
-  useEffect(() => {
-    if (!isEdit) return
-    getTransaction(id).then((res) => {
-      const tx = res.data
-      setType(tx.type)
-      setAmount(tx.amount)
-      setCategoryId(tx.categoryId)
-      setAccountId(tx.accountId)
-      setDate(tx.date)
-      setMemo(tx.memo || '')
-      setIsRecurring(tx.isRecurring)
-    }).catch(() => setError('거래 정보를 불러오지 못했습니다.'))
   }, [id])
 
   const selectedCategory = categories.find((c) => c.id === categoryId)
@@ -89,13 +95,13 @@ export default function TransactionForm() {
   return (
     <div className="bg-gray-50">
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-4 pt-12 pb-4 bg-white sticky top-0 z-10">
+      <div className="flex items-center justify-between px-4 pb-4 pt-safe bg-white sticky top-0 z-10">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-base font-semibold">{isEdit ? '거래 수정' : '거래 추가'}</h1>
+        <h1 className="text-base font-semibold mt-2">{isEdit ? '거래 수정' : '거래 추가'}</h1>
         <div className="w-10" />
       </div>
 
@@ -217,7 +223,7 @@ export default function TransactionForm() {
           </div>
           <button
             onClick={() => setIsRecurring(!isRecurring)}
-            className={`w-12 h-6 rounded-full transition-colors relative ${
+            className={`flex-shrink-0 w-12 h-6 rounded-full transition-colors relative ${
               isRecurring ? 'bg-primary' : 'bg-gray-200'
             }`}
           >

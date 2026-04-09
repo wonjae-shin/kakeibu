@@ -125,8 +125,8 @@ export default function Settings() {
   return (
     <div className="pb-4">
       {/* 헤더 */}
-      <div className="bg-white px-4 pt-12 pb-4 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-lg font-bold text-gray-900">설정</h1>
+      <div className="bg-white px-4 pb-4 pt-safe sticky top-0 z-10 shadow-sm">
+        <h1 className="text-xl font-bold text-gray-900 mt-2">설정</h1>
       </div>
 
       <div className="px-4 mt-4 flex flex-col gap-3">
