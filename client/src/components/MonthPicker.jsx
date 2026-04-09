@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { formatMonth, currentMonth } from '@/utils/format.js'
 
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
 
 export default function MonthPicker({ month, onChange, light = false }) {
   const [open, setOpen] = useState(false)
+  const [popupStyle, setPopupStyle] = useState({})
+  const triggerRef = useRef(null)
   const today = currentMonth()
 
   const currentYear = parseInt(month.split('-')[0])
@@ -18,6 +20,24 @@ export default function MonthPicker({ month, onChange, light = false }) {
 
   const openPicker = () => {
     setPickerYear(currentYear)
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      const popupWidth = 288 // w-72
+      const popupHeight = 220
+      const viewportHeight = window.innerHeight
+      const viewportWidth = window.innerWidth
+
+      let top = rect.bottom + 8
+      // 아래 공간 부족하면 위로
+      if (top + popupHeight > viewportHeight - 16) {
+        top = rect.top - popupHeight - 8
+      }
+      let left = rect.left + rect.width / 2 - popupWidth / 2
+      if (left < 8) left = 8
+      if (left + popupWidth > viewportWidth - 8) left = viewportWidth - popupWidth - 8
+
+      setPopupStyle({ top, left, width: popupWidth })
+    }
     setOpen(true)
   }
 
@@ -25,6 +45,7 @@ export default function MonthPicker({ month, onChange, light = false }) {
     <div className="relative">
       <div className="flex items-center gap-1.5">
         <button
+          ref={triggerRef}
           onClick={openPicker}
           className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors ${light ? 'hover:bg-white/20' : 'hover:bg-gray-100'}`}
         >
@@ -45,11 +66,13 @@ export default function MonthPicker({ month, onChange, light = false }) {
         )}
       </div>
 
-      {/* 팝업 */}
+      {/* 팝업 — fixed로 뷰포트 기준 위치 */}
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-2xl shadow-xl z-50 w-72 p-4">
+          <div
+            className="fixed bg-white rounded-2xl shadow-xl z-50 p-4"
+            style={popupStyle}
             {/* 연도 선택 */}
             <div className="flex items-center justify-between mb-3">
               <button
