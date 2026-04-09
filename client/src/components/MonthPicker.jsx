@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { formatMonth, currentMonth } from '@/utils/format.js'
 
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
@@ -73,6 +73,7 @@ export default function MonthPicker({ month, onChange, light = false }) {
           <div
             className="fixed bg-white rounded-2xl shadow-xl z-50 p-4"
             style={popupStyle}
+          >
             {/* 연도 선택 */}
             <div className="flex items-center justify-between mb-3">
               <button
