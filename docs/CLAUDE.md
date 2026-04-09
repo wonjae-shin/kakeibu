@@ -37,6 +37,13 @@
 `docs/TASKS.md`의 체크리스트 기준으로 진행.
 작업 완료 시 해당 항목 `[x]`로 업데이트할 것.
 
+## 테스트 규칙
+- 테스트 프레임워크: Vitest (client + server 공통)
+- 테스트 실행: `npm run test` (client/, server/ 각 폴더에서)
+- pre-push hook으로 lint + 테스트 자동 실행 (`.git/hooks/pre-push`)
+- 새 기능 추가 시 관련 단위 테스트 필수 작성
+- API 엔드포인트는 인증/성공/실패 케이스 모두 커버
+
 ## 주의사항
 - DB는 SQLite 사용 (추후 PostgreSQL 마이그레이션 고려한 Prisma 스키마 유지)
 - 1단계에서 사용자는 `.env`의 하드코딩 계정 1개만 사용

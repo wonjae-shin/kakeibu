@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "axios": "^1.14.0",
@@ -32,6 +34,11 @@
     "globals": "^15.11.0",
     "postcss": "^8.5.9",
     "tailwindcss": "^3.4.19",
-    "vite": "^5.4.10"
+    "vite": "^5.4.10",
+    "vitest": "^2.1.0",
+    "@vitest/ui": "^2.1.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/jest-dom": "^6.6.0",
+    "jsdom": "^25.0.0"
   }
 }
