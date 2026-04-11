@@ -23,7 +23,8 @@
     "prisma": "^5.22.0"
   },
   "devDependencies": {
+    "supertest": "^7.0.0",
     "vitest": "^2.1.0",
-    "supertest": "^7.0.0"
+    "xlsx": "^0.18.5"
   }
 }

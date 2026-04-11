@@ -7,7 +7,17 @@
 개인 가계부 웹앱. 현재는 1인 사용, 추후 다중 사용자 배포 확장 목표.
 
 ## 필수 참고 문서
-작업 전 반드시 읽을 것:
+작업 유형에 따라 해당 파일만 읽을 것:
+
+| 작업 유형 | 읽어야 할 파일 |
+|-----------|---------------|
+| 새 기능 구현 | `docs/PRD.md`, `docs/TASKS.md`, `docs/ARCHITECTURE.md` |
+| UI/화면 수정 | `docs/UI_FLOW.md` |
+| API/DB 수정 | `docs/ARCHITECTURE.md` |
+| 버그 수정 | 해당 파일만 직접 확인 (docs 불필요) |
+| 배포 | `docs/ARCHITECTURE.md` |
+| 작업 계획 확인 | `docs/TASKS.md` |
+
 - `docs/PRD.md` — 기능 요구사항 및 우선순위
 - `docs/ARCHITECTURE.md` — 기술 스택, 폴더 구조, DB 스키마, API 설계
 - `docs/UI_FLOW.md` — 화면 구조 및 페이지 스펙
