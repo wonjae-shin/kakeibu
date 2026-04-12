@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 import authRouter from './routes/auth.js'
 import categoriesRouter from './routes/categories.js'
@@ -13,6 +15,7 @@ import { errorHandler } from './middleware/errorHandler.js'
 
 dotenv.config()
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = process.env.PORT || 4000
 
@@ -32,6 +35,15 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use(errorHandler)
+
+// 프로덕션: React 빌드 정적 파일 서빙
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = path.resolve(__dirname, '../../client/dist')
+  app.use(express.static(clientDist))
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'))
+  })
+}
 
 app.listen(PORT, () => {
   console.log(`서버 실행 중: http://localhost:${PORT}`)
