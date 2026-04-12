@@ -10,6 +10,7 @@ import TransactionForm from '@/pages/TransactionForm.jsx'
 import Statistics from '@/pages/Statistics.jsx'
 import Settings from '@/pages/Settings.jsx'
 import Budget from '@/pages/Budget.jsx'
+import Notifications from '@/pages/Notifications.jsx'
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuthStore()
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="statistics" element={<Statistics />} />
           <Route path="settings" element={<Settings />} />
           <Route path="budget" element={<Budget />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
