@@ -236,7 +236,7 @@ export default function Budget() {
                       <button
                         key={cat.id}
                         onClick={() => openEdit(null, cat.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs text-gray-600 active:bg-gray-50"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs text-gray-600 active:bg-[#F5F3F0]"
                       >
                         <span>{cat.icon}</span>
                         <span>{cat.name}</span>

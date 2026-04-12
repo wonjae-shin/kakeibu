@@ -93,7 +93,7 @@ export default function TransactionForm() {
   }
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-[#F5F3F0]">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 pb-3 pt-safe bg-white sticky top-0 z-10 border-b border-gray-100">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500">
@@ -285,7 +285,7 @@ export default function TransactionForm() {
               className={`flex items-center gap-3 p-4 rounded-xl border transition-colors ${
                 accountId === acc.id
                   ? 'border-primary bg-primary/5'
-                  : 'border-gray-100 bg-gray-50'
+                  : 'border-gray-100 bg-[#F5F3F0]'
               }`}
             >
               <span className="text-xl">

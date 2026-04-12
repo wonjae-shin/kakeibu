@@ -70,7 +70,7 @@ export default function Dashboard() {
   return (
     <div className="pb-4">
       {/* 헤더 */}
-      <div className="bg-gradient-to-br from-violet-300 via-purple-200 to-fuchsia-200 px-4 pb-6 pt-safe">
+      <div className="bg-gradient-to-br from-orange-200 via-amber-100 to-rose-100 px-4 pb-6 pt-safe">
         <div className="flex items-center justify-between mt-2 mb-5">
           <MonthPicker
             month={month}
@@ -79,7 +79,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/transactions/new')}
-              className="flex items-center gap-1.5 bg-white/40 text-violet-800 text-sm font-medium px-3 py-1.5 rounded-full"
+              className="flex items-center gap-1.5 bg-white/40 text-orange-800 text-sm font-medium px-3 py-1.5 rounded-full"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -88,7 +88,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => navigate('/settings')}
-              className="flex items-center justify-center w-8 h-8 bg-white/40 text-violet-800 rounded-full"
+              className="flex items-center justify-center w-8 h-8 bg-white/40 text-orange-800 rounded-full"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -111,17 +111,17 @@ export default function Dashboard() {
           <>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div className="bg-white/40 rounded-2xl p-4">
-                <p className="text-violet-600 text-xs mb-1">수입</p>
-                <p className="text-violet-900 text-lg font-bold">+{formatAmount(summary.income)}</p>
+                <p className="text-orange-600 text-xs mb-1">수입</p>
+                <p className="text-orange-900 text-lg font-bold">+{formatAmount(summary.income)}</p>
               </div>
               <div className="bg-white/40 rounded-2xl p-4">
-                <p className="text-violet-600 text-xs mb-1">지출</p>
-                <p className="text-violet-900 text-lg font-bold">-{formatAmount(summary.expense)}</p>
+                <p className="text-orange-600 text-xs mb-1">지출</p>
+                <p className="text-orange-900 text-lg font-bold">-{formatAmount(summary.expense)}</p>
               </div>
             </div>
             <div className="bg-white/30 rounded-2xl px-4 py-3 flex items-center justify-between">
-              <span className="text-violet-600 text-sm">결산</span>
-              <span className={`text-base font-bold ${summary.income - summary.expense >= 0 ? 'text-violet-900' : 'text-rose-500'}`}>
+              <span className="text-orange-600 text-sm">결산</span>
+              <span className={`text-base font-bold ${summary.income - summary.expense >= 0 ? 'text-orange-900' : 'text-rose-500'}`}>
                 {summary.income - summary.expense >= 0 ? '+' : ''}{formatAmount(summary.income - summary.expense)}
               </span>
             </div>

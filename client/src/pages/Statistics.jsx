@@ -229,7 +229,7 @@ export default function Statistics() {
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    expenseDiff > 0 ? 'bg-red-50' : expenseDiff < 0 ? 'bg-green-50' : 'bg-gray-50'
+                    expenseDiff > 0 ? 'bg-red-50' : expenseDiff < 0 ? 'bg-green-50' : 'bg-[#F5F3F0]'
                   }`}
                 >
                   {expenseDiff > 0 ? (

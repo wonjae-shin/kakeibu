@@ -7,7 +7,7 @@ const router = Router()
 const prisma = new PrismaClient()
 
 // POST /api/notifications/ingest
-// Tasker/Macrodroid에서 JWT 토큰과 함께 알림 텍스트 전송
+// Tasker/Macrodroid에서 JWT 토큰과 함께 알림 텍스트 전송 → 자동으로 거래 등록
 // Body: { text, appName }
 router.post('/ingest', authMiddleware, async (req, res) => {
   try {
@@ -19,21 +19,63 @@ router.post('/ingest', authMiddleware, async (req, res) => {
     }
 
     const parsed = parseNotification(text, appName)
+    if (!parsed?.amount) {
+      return res.json({ success: true, data: null, message: '금액을 파싱할 수 없어 무시됨' })
+    }
 
-    const notification = await prisma.notification.create({
+    // 카드명으로 계좌 매칭 (카드명 일부가 계좌명에 포함되면 매칭)
+    const accounts = await prisma.account.findMany({ where: { userId } })
+    const cardKeyword = parsed.cardName?.replace('카드', '').trim() || ''
+    const matchedAccount =
+      accounts.find((a) => cardKeyword && a.name.includes(cardKeyword)) ||
+      accounts.find((a) => a.type === 'card') ||
+      accounts[0]
+
+    if (!matchedAccount) {
+      return res.status(400).json({ success: false, message: '등록된 계좌가 없습니다' })
+    }
+
+    // 기본 카테고리: 지출→기타지출, 수입→기타수입
+    const defaultCatName = parsed.type === 'expense' ? '기타지출' : '기타수입'
+    const categories = await prisma.category.findMany({ where: { userId: null } })
+    const matchedCategory =
+      categories.find((c) => c.name === defaultCatName) ||
+      categories.find((c) => c.type === parsed.type || c.type === 'both') ||
+      categories[0]
+
+    if (!matchedCategory) {
+      return res.status(400).json({ success: false, message: '등록된 카테고리가 없습니다' })
+    }
+
+    // 거래 자동 생성
+    const transaction = await prisma.transaction.create({
       data: {
-        raw: text,
-        appName: appName || null,
-        amount: parsed?.amount || null,
-        merchant: parsed?.merchant || null,
-        cardName: parsed?.cardName || null,
-        type: parsed?.type || 'expense',
-        status: 'pending',
+        type: parsed.type,
+        amount: parsed.amount,
+        memo: parsed.merchant || parsed.cardName || '',
+        date: new Date().toISOString().slice(0, 10),
+        categoryId: matchedCategory.id,
+        accountId: matchedAccount.id,
         userId,
       },
     })
 
-    res.json({ success: true, data: notification })
+    // 알림 이력 저장 (confirmed 상태)
+    await prisma.notification.create({
+      data: {
+        raw: text,
+        appName: appName || null,
+        amount: parsed.amount,
+        merchant: parsed.merchant || null,
+        cardName: parsed.cardName || null,
+        type: parsed.type,
+        status: 'confirmed',
+        transactionId: transaction.id,
+        userId,
+      },
+    })
+
+    res.json({ success: true, data: transaction })
   } catch (e) {
     res.status(500).json({ success: false, message: e.message })
   }

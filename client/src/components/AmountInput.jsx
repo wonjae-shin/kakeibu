@@ -27,7 +27,7 @@ export default function AmountInput({ value, onChange }) {
           className={`h-14 rounded-xl text-xl font-medium transition-colors
             ${key === 'del'
               ? 'bg-gray-100 text-gray-600 active:bg-gray-200'
-              : 'bg-gray-50 text-gray-900 active:bg-gray-200'
+              : 'bg-[#F5F3F0] text-gray-900 active:bg-gray-200'
             }`}
         >
           {key === 'del' ? (

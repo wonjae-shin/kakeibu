@@ -96,7 +96,7 @@ export default function Transactions() {
   const activeFilterCount = [filterType !== 'all', filterCategories.size > 0].filter(Boolean).length
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-[#F5F3F0]">
       {/* 헤더 */}
       <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 border-b border-gray-100">
         <div className="flex items-center justify-between mt-2 mb-3">
@@ -146,7 +146,7 @@ export default function Transactions() {
           sortedDates.map((date) => (
             <div key={date} className="mb-2">
               {/* 날짜 헤더 */}
-              <div className="px-4 py-2 bg-gray-50">
+              <div className="px-4 py-2 bg-[#F5F3F0]">
                 <span className="text-xs font-medium text-gray-500">{formatDate(date)}</span>
               </div>
               {/* 거래 목록 */}

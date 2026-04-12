@@ -1,4 +1,18 @@
 {
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const fs=require('fs');let r='';process.stdin.on('data',d=>r+=d);process.stdin.on('end',()=>{try{const d=JSON.parse(r);const c=d.tool_input&&d.tool_input.command||'';if(c.includes('git commit')){const m=c.match(/-m ['\\\"]((?:[^'\\\"\\\\]|\\\\.)+)['\\\"]/);if(m){const dt=new Date().toISOString().slice(0,10);const line='\\n- '+dt+': '+m[1];fs.appendFileSync('docs/CHANGELOG.md',line);}}}catch(e){}});\"",
+            "statusMessage": "CHANGELOG 기록 중..."
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(npm create:*)",

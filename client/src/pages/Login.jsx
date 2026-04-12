@@ -47,7 +47,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 select-none">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F3F0] select-none">
       {/* 로고 */}
       <div className="mb-12 text-center">
         <div className="text-5xl mb-3">💰</div>

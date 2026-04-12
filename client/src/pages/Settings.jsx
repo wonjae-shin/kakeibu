@@ -6,7 +6,32 @@ import { getAccounts, createAccount, updateAccount, deleteAccount } from '@/api/
 import { getTransactions } from '@/api/transactions.js'
 import BottomSheet from '@/components/BottomSheet.jsx'
 
-const ICONS = ['🍽','☕','🚌','🛍','🎬','💊','📱','📺','🏠','📦','💰','💵','🎁','🏦','↩️','📥','🚗','✈️','🎓','🐶','🏋️','🎮','🍺','💇','🧴','🛒','💡','🧾']
+const ICONS = [
+  // 음식/식비
+  '🍜','🍽','🍱','🍔','🍕','🍣','🍛','🥗','🥘','🍖','🍗','🥩','🌮','🍞','🧁','🎂','🍰','🍩','🍦','🧃','🥤','☕','🧋','🍺','🍻','🥂','🍷','🍸',
+  // 교통
+  '🚌','🚗','🚕','🚙','🚲','🛵','🏍','✈️','🚂','⛽','🛻','🚐','🛺',
+  // 쇼핑/생활
+  '🛍','🛒','👔','👗','👠','👟','👜','💍','💄','🧴','🧹','🧺','🪣','🛁','🪑','🛋','🖼','🪴','🧸',
+  // 주거
+  '🏠','🏡','🏘','🔑','🛏','🪟','💡','🔌','🪠','🔧','🔨','🪚',
+  // 의료/건강
+  '💊','🩺','🏥','💉','🩹','🧬','🦷','👓','🩻','🧘','🏋','🤸','🏃','🚴',
+  // 문화/여가
+  '🎬','🎮','🎵','🎸','🎨','📚','📖','🎭','🎪','🎠','🎯','🎲','♟','🃏','🎳','⚽','🏀','🎾','⛳','🏊','🧗','🏄','🎿','🎣',
+  // 여행
+  '✈️','🏖','🏔','🗺','🧳','🏕','🗼','🗽','🎡','🚢','🏨',
+  // 교육
+  '🎓','📝','✏️','🖊','📐','📏','🔬','🔭','💻','🖥','📡',
+  // 반려동물
+  '🐶','🐱','🐰','🐹','🐟','🦜','🐾','🦴','🐾',
+  // 경조사/사람
+  '🎁','🎀','🎊','🎉','💐','💒','👶','👨‍👩‍👧','🤝','🥂',
+  // 금융/수입
+  '💰','💵','💴','💳','🏦','📈','📊','💹','💼','🤑','👛','💸','🐷','🪙','💎',
+  // 기타
+  '📦','🗂','📥','📤','🗑','🔖','📌','🧾','💡','⚙️','🔐','🛡','🎯','❓',
+]
 const COLORS = ['#EF4444','#F97316','#F59E0B','#22C55E','#10B981','#14B8A6','#3B82F6','#6366F1','#8B5CF6','#EC4899','#6B7280','#78716C']
 
 export default function Settings() {
@@ -165,7 +190,7 @@ export default function Settings() {
                     {defaultCategories.map((cat) => (
                       <span
                         key={cat.id}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-gray-50 text-gray-500"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-[#F5F3F0] text-gray-500"
                       >
                         {cat.icon} {cat.name}
                       </span>
@@ -345,14 +370,16 @@ export default function Settings() {
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1.5 block">아이콘</label>
-            <div className="grid grid-cols-7 gap-2">
-              {ICONS.map((icon) => (
+            <label className="text-xs text-gray-500 mb-1.5 block">
+              아이콘 <span className="text-gray-400">— 현재: {catForm.icon}</span>
+            </label>
+            <div className="grid grid-cols-8 gap-1.5 max-h-52 overflow-y-auto pr-1">
+              {ICONS.map((icon, i) => (
                 <button
-                  key={icon}
+                  key={`${icon}-${i}`}
                   onClick={() => setCatForm({ ...catForm, icon })}
                   className={`h-10 rounded-xl text-xl flex items-center justify-center transition-colors ${
-                    catForm.icon === icon ? 'bg-primary/10 ring-1 ring-primary' : 'bg-gray-50'
+                    catForm.icon === icon ? 'bg-primary/10 ring-1 ring-primary' : 'bg-[#F5F3F0]'
                   }`}
                 >
                   {icon}

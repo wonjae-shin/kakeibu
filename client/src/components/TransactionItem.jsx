@@ -7,7 +7,7 @@ export default function TransactionItem({ transaction, onClick }) {
   return (
     <button
       onClick={() => onClick?.(transaction)}
-      className="w-full flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors"
+      className="w-full flex items-center gap-3 px-4 py-3 bg-white hover:bg-[#F5F3F0] transition-colors"
     >
       {/* 카테고리 아이콘 */}
       <div

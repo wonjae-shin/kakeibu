@@ -33,6 +33,7 @@ export default function Notifications() {
   const [tab, setTab] = useState('pending') // 'pending' | 'all'
 
   const load = useCallback(async () => {
+    setError(null)
     try {
       const [nRes, cRes, aRes] = await Promise.all([
         getNotifications(tab === 'pending' ? { status: 'pending' } : {}),
@@ -91,9 +92,9 @@ export default function Notifications() {
   const pendingCount = notifications.filter((n) => n.status === 'pending').length
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-nav">
+    <div className="min-h-screen bg-[#F5F3F0] pb-nav">
       {/* 헤더 */}
-      <div className="bg-gradient-to-br from-violet-600 to-violet-800 px-4 pt-12 pb-6">
+      <div className="bg-gradient-to-br from-orange-600 to-orange-800 px-4 pt-12 pb-6">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => navigate(-1)} className="text-white/80">
             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -106,13 +107,13 @@ export default function Notifications() {
         {/* 탭 */}
         <div className="flex bg-white/20 rounded-xl p-1">
           <button
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === 'pending' ? 'bg-white text-violet-700' : 'text-white'}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === 'pending' ? 'bg-white text-orange-700' : 'text-white'}`}
             onClick={() => setTab('pending')}
           >
             대기중 {pendingCount > 0 && <span className="ml-1 bg-red-500 text-white text-xs px-1.5 rounded-full">{pendingCount}</span>}
           </button>
           <button
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === 'all' ? 'bg-white text-violet-700' : 'text-white'}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === 'all' ? 'bg-white text-orange-700' : 'text-white'}`}
             onClick={() => setTab('all')}
           >
             전체
@@ -155,7 +156,7 @@ export default function Notifications() {
                   <div className="flex flex-col gap-2 shrink-0">
                     <button
                       onClick={() => openConfirm(n)}
-                      className="bg-violet-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium"
+                      className="bg-orange-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium"
                     >
                       등록
                     </button>
@@ -175,7 +176,7 @@ export default function Notifications() {
 
       {/* 거래 등록 바텀시트 */}
       {selected && (
-        <BottomSheet onClose={() => setSelected(null)} title="거래 등록">
+        <BottomSheet isOpen={!!selected} onClose={() => setSelected(null)} title="거래 등록">
           <div className="space-y-4 pb-4">
             {/* 금액 */}
             <div>
@@ -241,7 +242,7 @@ export default function Notifications() {
                     onClick={() => setForm((f) => ({ ...f, categoryId: c.id }))}
                     className={`py-2 px-2 rounded-xl text-xs font-medium border transition-colors ${
                       form.categoryId === c.id
-                        ? 'bg-violet-600 text-white border-violet-600'
+                        ? 'bg-orange-600 text-white border-orange-600'
                         : 'border-gray-200 text-gray-600'
                     }`}
                   >
@@ -268,7 +269,7 @@ export default function Notifications() {
             <button
               onClick={handleConfirm}
               disabled={!form.categoryId || !form.accountId || !form.amount || loading}
-              className="w-full bg-violet-600 text-white py-3.5 rounded-2xl font-bold disabled:opacity-50"
+              className="w-full bg-orange-600 text-white py-3.5 rounded-2xl font-bold disabled:opacity-50"
             >
               {loading ? '등록 중...' : '거래 등록'}
             </button>
