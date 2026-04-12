@@ -93,7 +93,7 @@ export default function TransactionForm() {
   }
 
   return (
-    <div className="bg-[#F5F3F0]">
+    <div className="bg-[#F5F3F0] pb-28">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 pb-3 pt-safe bg-white sticky top-0 z-10 border-b border-gray-100">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500">
@@ -241,8 +241,10 @@ export default function TransactionForm() {
         <p className="text-sm text-expense text-center py-2">{error}</p>
       )}
 
-      {/* 저장 버튼 */}
-      <div className="p-4 bg-white border-t border-gray-100 mt-2">
+      {/* 저장 버튼 - 항상 하단 고정 */}
+      <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 py-3 bg-white border-t border-gray-100 z-20"
+        style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+      >
         <button
           onClick={handleSave}
           disabled={saving || amount === 0}
