@@ -14,11 +14,9 @@ export default function Dashboard() {
   const [recentTx, setRecentTx] = useState([])
   const [categoryTops, setCategoryTops] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    setError(null)
     try {
       const [sumRes, txRes, budgetRes] = await Promise.all([
         getTransactionSummary(month),
@@ -46,7 +44,7 @@ export default function Dashboard() {
         .slice(0, 3)
       setCategoryTops(tops)
     } catch {
-      setError('데이터를 불러오지 못했습니다.')
+      // ignore
     } finally {
       setLoading(false)
     }
@@ -67,28 +65,28 @@ export default function Dashboard() {
 
   const maxCatAmount = categoryTops[0]?.amount || 1
 
+  const balance = summary.income - summary.expense
+
   return (
     <div className="pb-4">
       {/* 헤더 */}
-      <div className="bg-gradient-to-br from-orange-200 via-amber-100 to-rose-100 px-4 pb-6 pt-safe">
-        <div className="flex items-center justify-between mt-2 mb-5">
-          <MonthPicker
-            month={month}
-            onChange={setMonth}
-          />
+      <div className="bg-[#1A0F00] px-4 pb-6 pt-safe">
+        {/* 상단 바 */}
+        <div className="flex items-center justify-between mt-2 mb-8">
+          <MonthPicker month={month} onChange={setMonth} light />
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/transactions/new')}
-              className="flex items-center gap-1.5 bg-white/40 text-orange-800 text-sm font-medium px-3 py-1.5 rounded-full"
+              className="flex items-center gap-1.5 bg-white/10 text-white/80 text-sm font-medium px-3 py-1.5 rounded-full border border-white/10"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               추가
             </button>
             <button
               onClick={() => navigate('/settings')}
-              className="flex items-center justify-center w-8 h-8 bg-white/40 text-orange-800 rounded-full"
+              className="flex items-center justify-center w-8 h-8 bg-white/10 text-white/70 rounded-full border border-white/10"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -98,32 +96,32 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 수입/지출 요약 카드 */}
+        {/* 메인 지출 금액 */}
         {loading ? (
-          <div className="h-20 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-          </div>
-        ) : error ? (
-          <div className="h-20 flex items-center justify-center">
-            <p className="text-white/70 text-sm">{error}</p>
+          <div className="h-24 flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="bg-white/40 rounded-2xl p-4">
-                <p className="text-orange-600 text-xs mb-1">수입</p>
-                <p className="text-orange-900 text-lg font-bold">+{formatAmount(summary.income)}</p>
-              </div>
-              <div className="bg-white/40 rounded-2xl p-4">
-                <p className="text-orange-600 text-xs mb-1">지출</p>
-                <p className="text-orange-900 text-lg font-bold">-{formatAmount(summary.expense)}</p>
-              </div>
+            <div className="mb-6">
+              <p className="text-white/40 text-xs font-medium tracking-widest uppercase mb-2">이번달 지출</p>
+              <p className="text-white text-4xl font-bold tracking-tight">
+                {formatAmount(summary.expense)}
+              </p>
             </div>
-            <div className="bg-white/30 rounded-2xl px-4 py-3 flex items-center justify-between">
-              <span className="text-orange-600 text-sm">결산</span>
-              <span className={`text-base font-bold ${summary.income - summary.expense >= 0 ? 'text-orange-900' : 'text-rose-500'}`}>
-                {summary.income - summary.expense >= 0 ? '+' : ''}{formatAmount(summary.income - summary.expense)}
-              </span>
+
+            {/* 수입 / 잔액 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 border border-white/8 rounded-2xl px-4 py-3">
+                <p className="text-white/40 text-xs mb-1.5">수입</p>
+                <p className="text-emerald-400 font-semibold text-base">+{formatAmount(summary.income)}</p>
+              </div>
+              <div className="bg-white/5 border border-white/8 rounded-2xl px-4 py-3">
+                <p className="text-white/40 text-xs mb-1.5">잔액</p>
+                <p className={`font-semibold text-base ${balance >= 0 ? 'text-white' : 'text-rose-400'}`}>
+                  {balance >= 0 ? '+' : ''}{formatAmount(balance)}
+                </p>
+              </div>
             </div>
           </>
         )}
