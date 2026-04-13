@@ -9,6 +9,8 @@ import {
 } from '@/api/transactions.js'
 import AmountInput from '@/components/AmountInput.jsx'
 import BottomSheet from '@/components/BottomSheet.jsx'
+import PageLayout from '@/components/PageLayout.jsx'
+import Card from '@/components/Card.jsx'
 import { today } from '@/utils/format.js'
 
 export default function TransactionForm() {
@@ -93,61 +95,55 @@ export default function TransactionForm() {
   }
 
   return (
-    <div className="bg-[#F5F3F0] pb-28">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between px-4 pb-3 pt-safe bg-white sticky top-0 z-10 border-b border-gray-100">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <h1 className="text-base font-semibold mt-2">{isEdit ? '거래 수정' : '거래 추가'}</h1>
-        <div className="w-10" />
-      </div>
+    <PageLayout className="pb-28">
+      {/* 헤더 카드 */}
+      <Card className="px-4 py-3">
+        <h1 className="text-base font-semibold text-gray-900">{isEdit ? '거래 수정' : '거래 추가'}</h1>
+      </Card>
 
       {/* 수입/지출 탭 */}
-      <div className="flex mx-4 mt-2 bg-gray-100 rounded-xl p-1">
+      <div className="flex bg-gray-100 rounded-xl p-1">
         {['expense', 'income'].map((t) => (
           <button
             key={t}
             onClick={() => {
               setType(t)
-              // 탭 바꾸면 카테고리 초기화
               const first = categories.find((c) => c.type === t || c.type === 'both')
               if (first) setCategoryId(first.id)
             }}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              type === t
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${type === t
                 ? t === 'expense'
                   ? 'bg-white text-expense shadow-sm'
                   : 'bg-white text-income shadow-sm'
                 : 'text-gray-400'
-            }`}
+              }`}
           >
             {t === 'expense' ? '지출' : '수입'}
           </button>
         ))}
       </div>
 
-      {/* 금액 표시 */}
-      <div className="text-center py-6">
-        <span
-          className={`text-4xl font-bold ${
-            type === 'expense' ? 'text-expense' : 'text-income'
-          }`}
-        >
-          {amount === 0 ? '0' : amount.toLocaleString()}
-        </span>
-        <span className="text-2xl font-bold text-gray-400 ml-1">원</span>
-      </div>
+      {/* 금액 + 키패드 카드 */}
+      <Card className="overflow-hidden">
+        {/* 금액 표시 */}
+        <div className="text-center py-5">
+          <span
+            className={`text-4xl font-bold ${type === 'expense' ? 'text-expense' : 'text-income'
+              }`}
+          >
+            {amount === 0 ? '0' : amount.toLocaleString()}
+          </span>
+          <span className="text-2xl font-bold text-gray-400 ml-1">원</span>
+        </div>
 
-      {/* 키패드 */}
-      <div className="bg-white pb-2">
-        <AmountInput value={amount} onChange={setAmount} />
-      </div>
+        {/* 키패드 */}
+        <div className="pb-2">
+          <AmountInput value={amount} onChange={setAmount} />
+        </div>
+      </Card>
 
-      {/* 입력 필드 */}
-      <div className="bg-white mt-2 divide-y divide-gray-100">
+      {/* 입력 필드 카드 */}
+      <Card className="overflow-hidden divide-y divide-gray-100">
         {/* 카테고리 */}
         <button
           onClick={() => setCatSheet(true)}
@@ -223,18 +219,16 @@ export default function TransactionForm() {
           </div>
           <button
             onClick={() => setIsRecurring(!isRecurring)}
-            className={`shrink-0 w-12 h-6 rounded-full transition-colors relative overflow-hidden ${
-              isRecurring ? 'bg-primary' : 'bg-gray-200'
-            }`}
+            className={`shrink-0 w-12 h-6 rounded-full transition-colors relative overflow-hidden ${isRecurring ? 'bg-primary' : 'bg-gray-200'
+              }`}
           >
             <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                isRecurring ? 'translate-x-6' : 'translate-x-0'
-              }`}
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isRecurring ? 'translate-x-6' : 'translate-x-0'
+                }`}
             />
           </button>
         </div>
-      </div>
+      </Card>
 
       {/* 에러 */}
       {error && (
@@ -242,7 +236,7 @@ export default function TransactionForm() {
       )}
 
       {/* 저장 버튼 - 항상 하단 고정 */}
-      <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 py-3 bg-white border-t border-gray-100 z-20"
+      <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 py-3 z-20"
         style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
       >
         <button
@@ -261,9 +255,8 @@ export default function TransactionForm() {
             <button
               key={cat.id}
               onClick={() => { setCategoryId(cat.id); setCatSheet(false) }}
-              className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-colors ${
-                categoryId === cat.id ? 'bg-primary/10 ring-1 ring-primary' : ''
-              }`}
+              className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-colors ${categoryId === cat.id ? 'bg-primary/10 ring-1 ring-primary' : ''
+                }`}
             >
               <span
                 className="w-12 h-12 rounded-full flex items-center justify-center text-xl"
@@ -284,11 +277,10 @@ export default function TransactionForm() {
             <button
               key={acc.id}
               onClick={() => { setAccountId(acc.id); setAccSheet(false) }}
-              className={`flex items-center gap-3 p-4 rounded-xl border transition-colors ${
-                accountId === acc.id
+              className={`flex items-center gap-3 p-4 rounded-xl border transition-colors ${accountId === acc.id
                   ? 'border-primary bg-primary/5'
                   : 'border-gray-100 bg-[#F5F3F0]'
-              }`}
+                }`}
             >
               <span className="text-xl">
                 {acc.type === 'cash' ? '💵' : acc.type === 'card' ? '💳' : '🏦'}
@@ -303,6 +295,6 @@ export default function TransactionForm() {
           ))}
         </div>
       </BottomSheet>
-    </div>
+    </PageLayout>
   )
 }

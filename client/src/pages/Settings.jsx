@@ -5,6 +5,8 @@ import { getCategories, createCategory, updateCategory, deleteCategory } from '@
 import { getAccounts, createAccount, updateAccount, deleteAccount } from '@/api/accounts.js'
 import { getTransactions } from '@/api/transactions.js'
 import BottomSheet from '@/components/BottomSheet.jsx'
+import PageLayout from '@/components/PageLayout.jsx'
+import Card from '@/components/Card.jsx'
 
 const ICONS = [
   // 음식/식비
@@ -148,25 +150,25 @@ export default function Settings() {
   const defaultCategories = categories.filter((c) => !c.userId)
 
   return (
-    <div className="pb-4">
-      {/* 헤더 */}
-      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 border-b border-gray-100">
-        <h1 className="text-lg font-bold text-gray-900 mt-2">설정</h1>
-      </div>
+    <PageLayout>
+      {/* 헤더 카드 */}
+      <Card className="px-4 py-3">
+        <h1 className="text-base font-bold text-gray-900">설정</h1>
+      </Card>
 
-      <div className="px-4 mt-4 flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {/* 계정 */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <Card className="overflow-hidden">
           <button
             onClick={handleLogout}
             className="w-full px-4 py-3.5 text-left text-sm text-expense font-medium"
           >
             로그아웃
           </button>
-        </div>
+        </Card>
 
         {/* 카테고리 관리 */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <Card className="overflow-hidden">
           <button
             onClick={() => setOpenSection(openSection === 'cat' ? null : 'cat')}
             className="w-full flex items-center justify-between px-4 py-3.5"
@@ -243,10 +245,10 @@ export default function Settings() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
 
         {/* 계좌 관리 */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <Card className="overflow-hidden">
           <button
             onClick={() => setOpenSection(openSection === 'acc' ? null : 'acc')}
             className="w-full flex items-center justify-between px-4 py-3.5"
@@ -302,21 +304,23 @@ export default function Settings() {
               </button>
             </div>
           )}
-        </div>
+        </Card>
 
         {/* 예산 관리 링크 */}
-        <button
-          onClick={() => navigate('/budget')}
-          className="bg-white rounded-2xl shadow-sm w-full flex items-center justify-between px-4 py-3.5"
-        >
-          <span className="text-sm font-semibold text-gray-800">예산 관리</span>
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        <Card className="overflow-hidden !p-0">
+          <button
+            onClick={() => navigate('/budget')}
+            className="w-full flex items-center justify-between px-4 py-3.5"
+          >
+            <span className="text-sm font-semibold text-gray-800">예산 관리</span>
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </Card>
 
         {/* 데이터 */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <Card className="overflow-hidden !p-0">
           <p className="px-4 pt-3.5 pb-1 text-xs text-gray-400 font-medium">데이터</p>
           <button
             onClick={handleExport}
@@ -327,13 +331,13 @@ export default function Settings() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
           </button>
-        </div>
+        </Card>
 
         {/* 앱 정보 */}
-        <div className="bg-white rounded-2xl shadow-sm px-4 py-3.5">
+        <Card className="px-4 py-3.5">
           <p className="text-xs text-gray-400">앱 정보</p>
           <p className="text-sm text-gray-500 mt-0.5">버전 1.0.0</p>
-        </div>
+        </Card>
       </div>
 
       {/* 카테고리 추가/수정 바텀 시트 */}
@@ -477,6 +481,6 @@ export default function Settings() {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   )
 }

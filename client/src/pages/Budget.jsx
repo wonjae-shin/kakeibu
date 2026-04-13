@@ -5,6 +5,8 @@ import { getTransactionSummary, getTransactions } from '@/api/transactions.js'
 import MonthPicker from '@/components/MonthPicker.jsx'
 import BottomSheet from '@/components/BottomSheet.jsx'
 import ErrorMessage from '@/components/ErrorMessage.jsx'
+import PageLayout from '@/components/PageLayout.jsx'
+import Card from '@/components/Card.jsx'
 import { currentMonth, formatAmount } from '@/utils/format.js'
 
 function ProgressBar({ ratio, amount, budgetAmount }) {
@@ -128,14 +130,14 @@ export default function Budget() {
   )
 
   return (
-    <div className="pb-4">
-      {/* 헤더 */}
-      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 border-b border-gray-100">
-        <div className="flex items-center justify-between mt-2">
-          <h1 className="text-lg font-bold text-gray-900">예산</h1>
+    <PageLayout>
+      {/* 헤더 카드 */}
+      <Card className="px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-base font-bold text-gray-900">예산</h1>
           <MonthPicker month={month} onChange={setMonth} />
         </div>
-      </div>
+      </Card>
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -144,9 +146,9 @@ export default function Budget() {
       ) : error ? (
         <ErrorMessage message={error} onRetry={fetchData} />
       ) : (
-        <div className="px-4 mt-4 flex flex-col gap-4">
+        <>
           {/* 전체 예산 */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <Card className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-gray-800">전체 예산</h2>
               <div className="flex items-center gap-2">
@@ -182,10 +184,10 @@ export default function Budget() {
                 전체 예산을 설정해주세요.
               </p>
             )}
-          </div>
+          </Card>
 
           {/* 카테고리별 예산 */}
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <Card className="overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-50">
               <h2 className="text-sm font-semibold text-gray-800">카테고리별 예산</h2>
             </div>
@@ -247,8 +249,8 @@ export default function Budget() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+          </Card>
+        </>
       )}
 
       {/* 예산 편집 바텀 시트 */}
@@ -285,6 +287,6 @@ export default function Budget() {
           </button>
         </div>
       </BottomSheet>
-    </div>
+    </PageLayout>
   )
 }

@@ -35,3 +35,33 @@ body {
     padding-bottom: calc(4rem + env(safe-area-inset-bottom));
   }
 }
+
+/* 듀얼 슬라이더 핸들 스타일 */
+input[type="range"].appearance-none::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #F97316;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+input[type="range"].appearance-none::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #F97316;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+input[type="range"].appearance-none::-webkit-slider-runnable-track {
+  background: transparent;
+}
+input[type="range"].appearance-none::-moz-range-track {
+  background: transparent;
+}

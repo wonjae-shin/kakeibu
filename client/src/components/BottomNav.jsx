@@ -7,7 +7,7 @@ export default function BottomNav() {
       style={{ height: 'calc(4rem + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <TabItem to="/" label="홈" icon={HomeIcon} end />
-      <TabItem to="/transactions" label="내역" icon={ListIcon} />
+      <TabItem to="/transactions" label="내역" icon={ListIcon} end />
       <NavLink
         to="/transactions/new"
         className="flex items-center justify-center w-14 h-14 rounded-full bg-primary shadow-lg -mt-5"

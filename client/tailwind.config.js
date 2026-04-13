@@ -11,6 +11,14 @@ export default {
         income: '#22C55E',
         expense: '#EF4444',
         warning: '#F59E0B',
+        background: '#F5F3F0',
+        surface: '#FFFFFF',
+      },
+      borderRadius: {
+        'card': '1rem',
+      },
+      boxShadow: {
+        'card': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
       },
       keyframes: {
         shake: {

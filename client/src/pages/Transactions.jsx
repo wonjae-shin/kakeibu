@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { getTransactions, deleteTransaction } from '@/api/transactions.js'
-import { getCategories } from '@/api/categories.js'
 import TransactionItem from '@/components/TransactionItem.jsx'
 import MonthPicker from '@/components/MonthPicker.jsx'
 import BottomSheet from '@/components/BottomSheet.jsx'
 import EmptyState from '@/components/EmptyState.jsx'
 import ErrorMessage from '@/components/ErrorMessage.jsx'
+import PageLayout from '@/components/PageLayout.jsx'
+import Card from '@/components/Card.jsx'
 import { currentMonth, formatAmount, formatDate } from '@/utils/format.js'
+import useTransactions, { AMOUNT_MAX_LIMIT } from '@/hooks/useTransactions.js'
 
 export default function Transactions() {
   const navigate = useNavigate()
@@ -18,141 +19,88 @@ export default function Transactions() {
     setMonth(m)
     setSearchParams({ month: m }, { replace: true })
   }
-  const [transactions, setTransactions] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
 
-  // 필터
-  const [filterType, setFilterType] = useState('all') // all | income | expense
-  const [filterCategories, setFilterCategories] = useState(new Set()) // 다중선택
-  const [search, setSearch] = useState('')
   const [filterSheet, setFilterSheet] = useState(false)
 
-  const toggleFilterCategory = (id) => {
-    setFilterCategories((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  // 삭제 확인
-  const [deleteTarget, setDeleteTarget] = useState(null)
-
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const params = { month }
-      if (filterType !== 'all') params.type = filterType
-      if (search) params.search = search
-      const [txRes, catRes] = await Promise.all([
-        getTransactions(params),
-        getCategories(),
-      ])
-      setTransactions(txRes.data)
-      setCategories(catRes.data)
-    } catch {
-      setError('데이터를 불러오지 못했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }, [month, filterType, search])
-
-  useEffect(() => { fetchData() }, [fetchData])
-
-  // 카테고리 다중 필터 (클라이언트)
-  const filteredTx = filterCategories.size > 0
-    ? transactions.filter((tx) => filterCategories.has(tx.categoryId))
-    : transactions
-
-  // 날짜별 그룹핑
-  const grouped = filteredTx.reduce((acc, tx) => {
-    const key = tx.date
-    if (!acc[key]) acc[key] = []
-    acc[key].push(tx)
-    return acc
-  }, {})
-  const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
-
-  // 월 합계 (필터 적용 기준)
-  const income = filteredTx.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-  const expense = filteredTx.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    try {
-      await deleteTransaction(deleteTarget)
-      setDeleteTarget(null)
-      fetchData()
-    } catch {
-      setDeleteTarget(null)
-      setError('삭제에 실패했습니다.')
-    }
-  }
-
-  const activeFilterCount = [filterType !== 'all', filterCategories.size > 0].filter(Boolean).length
+  // 커스텀 훅을 통해 비즈니스 로직 캡슐화
+  const {
+    categories, loading, error,
+    filterType, setFilterType,
+    filterCategories, setFilterCategories, toggleFilterCategory,
+    search, setSearch,
+    amountMin, setAmountMin,
+    amountMax, setAmountMax,
+    activeFilterCount,
+    deleteTarget, setDeleteTarget, deleteTransaction,
+    groupedDates, sortedDates, income, expense,
+    refetch
+  } = useTransactions(month)
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F5F3F0]">
-      {/* 헤더 */}
-      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 border-b border-gray-100">
-        <div className="flex items-center justify-between mt-2 mb-3">
-          <MonthPicker month={month} onChange={(m) => { changeMonth(m); setFilterType('all'); setFilterCategories(new Set()) }} />
-          <button
-            onClick={() => setFilterSheet(true)}
-            className="relative flex items-center gap-1 text-sm text-gray-500 px-3 py-1.5 rounded-lg bg-gray-100"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-            </svg>
-            필터
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] rounded-full flex items-center justify-center">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-        </div>
+    <PageLayout className="!pt-0">
+      {/* 헤더 카드 */}
+      <div className="pt-4">
+        <Card className="px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <MonthPicker 
+              month={month} 
+              onChange={(m) => { 
+                changeMonth(m); 
+                setFilterType('all'); 
+                setFilterCategories(new Set()); 
+              }} 
+            />
+            <button
+              onClick={() => setFilterSheet(true)}
+              className="relative flex items-center gap-1 text-sm text-gray-500 px-3 py-1.5 rounded-lg bg-gray-100"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+              </svg>
+              필터
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] rounded-full flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
 
-        {/* 검색 */}
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="메모, 카테고리 검색"
-            className="w-full pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none"
-          />
-        </div>
+          {/* 검색 */}
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="메모, 카테고리 검색"
+              className="w-full pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none"
+            />
+          </div>
+        </Card>
       </div>
 
       {/* 내역 리스트 */}
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col gap-3">
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <ErrorMessage message={error} onRetry={fetchData} />
+          <ErrorMessage message={error} onRetry={refetch} />
         ) : sortedDates.length === 0 ? (
           <EmptyState message="거래 내역이 없습니다." />
         ) : (
           sortedDates.map((date) => (
-            <div key={date} className="mb-2">
-              {/* 날짜 헤더 */}
-              <div className="px-4 py-2 bg-[#F5F3F0]">
-                <span className="text-xs font-medium text-gray-500">{formatDate(date)}</span>
-              </div>
-              {/* 거래 목록 */}
-              <div className="bg-white divide-y divide-gray-50">
-                {grouped[date].map((tx) => (
-                  <div key={tx.id} className="flex items-center group">
+            <div key={date}>
+              {/* 날짜 레이블 */}
+              <p className="text-xs font-medium text-gray-400 mb-1.5 px-1">{formatDate(date)}</p>
+              {/* 거래 카드 */}
+              <Card className="overflow-hidden divide-y divide-gray-50">
+                {groupedDates[date].map((tx) => (
+                  <div key={tx.id} className="flex items-center">
                     <div className="flex-1 min-w-0">
                       <TransactionItem
                         transaction={tx}
@@ -170,14 +118,14 @@ export default function Transactions() {
                     </button>
                   </div>
                 ))}
-              </div>
+              </Card>
             </div>
           ))
         )}
       </div>
 
       {/* 하단 월별 합계 */}
-      <div className="sticky bg-white border-t border-gray-100 px-4 py-3 flex justify-between text-sm" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
+      <div className="fixed left-0 right-0 max-w-[480px] mx-auto bg-white border-t border-gray-100 px-4 py-3 flex justify-between text-sm shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)] z-40" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
         <div className="flex items-center gap-1.5">
           <span className="text-gray-400">수입</span>
           <span className="font-semibold text-income">+{formatAmount(income)}</span>
@@ -187,7 +135,7 @@ export default function Transactions() {
           <span className="font-semibold text-expense">-{formatAmount(expense)}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-400">결산</span>
+          <span className="text-gray-400">잔액</span>
           <span className={`font-semibold ${income - expense >= 0 ? 'text-income' : 'text-expense'}`}>
             {(income - expense) >= 0 ? '+' : ''}{formatAmount(income - expense)}
           </span>
@@ -196,15 +144,20 @@ export default function Transactions() {
 
       {/* 필터 바텀 시트 */}
       <BottomSheet isOpen={filterSheet} onClose={() => setFilterSheet(false)} title="필터">
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5 pb-6">
           {/* 유형 필터 */}
           <div>
             <p className="text-xs font-medium text-gray-400 mb-2">거래 유형</p>
             <div className="flex gap-2">
-              {[['all', '전체'], ['expense', '지출'], ['income', '수입']].map(([val, label]) => (
+              {[['expense', '지출'], ['income', '수입']].map(([val, label]) => (
                 <button
                   key={val}
-                  onClick={() => { setFilterType(val); setFilterCategories(new Set()) }}
+                  onClick={() => {
+                    setFilterType(filterType === val ? 'all' : val)
+                    setFilterCategories(new Set())
+                    setAmountMin(0)
+                    setAmountMax(AMOUNT_MAX_LIMIT)
+                  }}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     filterType === val
                       ? 'border-primary bg-primary/5 text-primary'
@@ -214,6 +167,67 @@ export default function Transactions() {
                   {label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* 금액 범위 필터 */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-medium text-gray-400">금액 범위</p>
+              {(amountMin > 0 || amountMax < AMOUNT_MAX_LIMIT) && (
+                <button
+                  onClick={() => { setAmountMin(0); setAmountMax(AMOUNT_MAX_LIMIT) }}
+                  className="text-xs text-gray-400 underline"
+                >
+                  초기화
+                </button>
+              )}
+            </div>
+            {/* 금액 표시 */}
+            <div className="flex justify-between text-xs font-medium text-gray-700 mb-4">
+              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-lg">{formatAmount(amountMin)}</span>
+              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-lg">{amountMax >= AMOUNT_MAX_LIMIT ? '제한 없음' : formatAmount(amountMax)}</span>
+            </div>
+            {/* 듀얼 슬라이더 */}
+            <div className="relative h-5 flex items-center">
+              {/* 트랙 배경 */}
+              <div className="absolute left-0 right-0 h-1.5 bg-gray-200 rounded-full" />
+              {/* 선택 구간 하이라이트 */}
+              <div
+                className="absolute h-1.5 bg-primary rounded-full"
+                style={{
+                  left: `${(amountMin / AMOUNT_MAX_LIMIT) * 100}%`,
+                  right: `${100 - (amountMax / AMOUNT_MAX_LIMIT) * 100}%`,
+                }}
+              />
+              {/* 최소 핸들 */}
+              <input
+                type="range"
+                min={0}
+                max={AMOUNT_MAX_LIMIT}
+                step={10000}
+                value={amountMin}
+                onChange={(e) => {
+                  const v = Number(e.target.value)
+                  setAmountMin(Math.min(v, amountMax - 10000))
+                }}
+                className="absolute w-full appearance-none bg-transparent cursor-pointer"
+                style={{ WebkitAppearance: 'none' }}
+              />
+              {/* 최대 핸들 */}
+              <input
+                type="range"
+                min={0}
+                max={AMOUNT_MAX_LIMIT}
+                step={10000}
+                value={amountMax}
+                onChange={(e) => {
+                  const v = Number(e.target.value)
+                  setAmountMax(Math.max(v, amountMin + 10000))
+                }}
+                className="absolute w-full appearance-none bg-transparent cursor-pointer"
+                style={{ WebkitAppearance: 'none' }}
+              />
             </div>
           </div>
 
@@ -230,7 +244,7 @@ export default function Transactions() {
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-0.5">
+            <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-0.5 custom-scrollbar">
               {categories.filter((c) =>
                 filterType === 'all' || c.type === filterType || c.type === 'both'
               ).map((cat) => (
@@ -274,7 +288,7 @@ export default function Transactions() {
                 취소
               </button>
               <button
-                onClick={handleDelete}
+                onClick={deleteTransaction}
                 className="flex-1 py-2.5 rounded-xl bg-expense text-white text-sm font-semibold"
               >
                 삭제
@@ -283,7 +297,6 @@ export default function Transactions() {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   )
 }
-

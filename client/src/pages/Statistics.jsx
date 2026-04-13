@@ -7,6 +7,8 @@ import { getMonthlyStats, getCategoryStats } from '@/api/stats.js'
 import { getTransactionSummary } from '@/api/transactions.js'
 import MonthPicker from '@/components/MonthPicker.jsx'
 import ErrorMessage from '@/components/ErrorMessage.jsx'
+import PageLayout from '@/components/PageLayout.jsx'
+import Card from '@/components/Card.jsx'
 import { currentMonth, formatAmount, addMonth } from '@/utils/format.js'
 
 const YEAR = new Date().getFullYear()
@@ -66,11 +68,11 @@ export default function Statistics() {
   }))
 
   return (
-    <div className="pb-4">
-      {/* 헤더 */}
-      <div className="bg-white px-4 pb-3 pt-safe sticky top-0 z-10 border-b border-gray-100">
-        <h1 className="text-lg font-bold text-gray-900 mt-2">통계</h1>
-      </div>
+    <PageLayout>
+      {/* 헤더 카드 */}
+      <Card className="px-4 py-3">
+        <h1 className="text-base font-bold text-gray-900">통계</h1>
+      </Card>
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -79,9 +81,9 @@ export default function Statistics() {
       ) : error ? (
         <ErrorMessage message={error} onRetry={fetchData} />
       ) : (
-        <div className="px-4 mt-4 flex flex-col gap-4">
+        <>
           {/* 연간 월별 수입/지출 바 차트 */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-800">월별 수입/지출 추이</h2>
               <div className="relative">
@@ -143,10 +145,10 @@ export default function Statistics() {
                 <Bar dataKey="지출" fill="#EF4444" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
 
           {/* 이번 달 지출 분석 */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-800">이번 달 지출 분석</h2>
               <div className="flex items-center gap-2">
@@ -190,7 +192,7 @@ export default function Statistics() {
                   </div>
                 </div>
 
-                {/* 카테고리 목록 */}
+                {/* 카테고 목록 */}
                 <div className="flex flex-col gap-2.5">
                   {catStats.categories.map((cat) => (
                     <div key={cat.categoryId} className="flex items-center gap-2">
@@ -220,11 +222,11 @@ export default function Statistics() {
                 </div>
               </>
             )}
-          </div>
+          </Card>
 
           {/* 전월 대비 */}
           {expenseDiff !== null && (
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <Card className="p-4">
               <h2 className="text-sm font-semibold text-gray-800 mb-3">전월 대비</h2>
               <div className="flex items-center gap-3">
                 <div
@@ -253,10 +255,10 @@ export default function Statistics() {
                   </p>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
-        </div>
+        </>
       )}
-    </div>
+    </PageLayout>
   )
 }
