@@ -1,40 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '@/store/authStore.js'
-import { getCategories, createCategory, updateCategory, deleteCategory } from '@/api/categories.js'
 import { getAccounts, createAccount, updateAccount, deleteAccount } from '@/api/accounts.js'
 import { getTransactions } from '@/api/transactions.js'
 import BottomSheet from '@/components/BottomSheet.jsx'
 import PageLayout from '@/components/PageLayout.jsx'
 import Card from '@/components/Card.jsx'
-
-const ICONS = [
-  // 음식/식비
-  '🍜','🍽','🍱','🍔','🍕','🍣','🍛','🥗','🥘','🍖','🍗','🥩','🌮','🍞','🧁','🎂','🍰','🍩','🍦','🧃','🥤','☕','🧋','🍺','🍻','🥂','🍷','🍸',
-  // 교통
-  '🚌','🚗','🚕','🚙','🚲','🛵','🏍','✈️','🚂','⛽','🛻','🚐','🛺',
-  // 쇼핑/생활
-  '🛍','🛒','👔','👗','👠','👟','👜','💍','💄','🧴','🧹','🧺','🪣','🛁','🪑','🛋','🖼','🪴','🧸',
-  // 주거
-  '🏠','🏡','🏘','🔑','🛏','🪟','💡','🔌','🪠','🔧','🔨','🪚',
-  // 의료/건강
-  '💊','🩺','🏥','💉','🩹','🧬','🦷','👓','🩻','🧘','🏋','🤸','🏃','🚴',
-  // 문화/여가
-  '🎬','🎮','🎵','🎸','🎨','📚','📖','🎭','🎪','🎠','🎯','🎲','♟','🃏','🎳','⚽','🏀','🎾','⛳','🏊','🧗','🏄','🎿','🎣',
-  // 여행
-  '✈️','🏖','🏔','🗺','🧳','🏕','🗼','🗽','🎡','🚢','🏨',
-  // 교육
-  '🎓','📝','✏️','🖊','📐','📏','🔬','🔭','💻','🖥','📡',
-  // 반려동물
-  '🐶','🐱','🐰','🐹','🐟','🦜','🐾','🦴','🐾',
-  // 경조사/사람
-  '🎁','🎀','🎊','🎉','💐','💒','👶','👨‍👩‍👧','🤝','🥂',
-  // 금융/수입
-  '💰','💵','💴','💳','🏦','📈','📊','💹','💼','🤑','👛','💸','🐷','🪙','💎',
-  // 기타
-  '📦','🗂','📥','📤','🗑','🔖','📌','🧾','💡','⚙️','🔐','🛡','🎯','❓',
-]
-const COLORS = ['#EF4444','#F97316','#F59E0B','#22C55E','#10B981','#14B8A6','#3B82F6','#6366F1','#8B5CF6','#EC4899','#6B7280','#78716C']
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -42,12 +13,6 @@ export default function Settings() {
 
   // 섹션 토글
   const [openSection, setOpenSection] = useState(null)
-
-  // 카테고리
-  const [categories, setCategories] = useState([])
-  const [catSheet, setCatSheet] = useState(false)
-  const [editCat, setEditCat] = useState(null)
-  const [catForm, setCatForm] = useState({ name: '', type: 'expense', icon: '📦', color: '#6B7280' })
 
   // 계좌
   const [accounts, setAccounts] = useState([])
@@ -59,29 +24,10 @@ export default function Settings() {
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { kind, id, name }
 
   useEffect(() => {
-    getCategories().then((r) => setCategories(r.data))
     getAccounts().then((r) => setAccounts(r.data))
   }, [])
 
-  const refreshCategories = () => getCategories().then((r) => setCategories(r.data))
   const refreshAccounts = () => getAccounts().then((r) => setAccounts(r.data))
-
-  // 카테고리 저장
-  const saveCat = async () => {
-    if (!catForm.name.trim()) return
-    setSaving(true)
-    try {
-      if (editCat) {
-        await updateCategory(editCat.id, catForm)
-      } else {
-        await createCategory(catForm)
-      }
-      setCatSheet(false)
-      refreshCategories()
-    } finally {
-      setSaving(false)
-    }
-  }
 
   // 계좌 저장
   const saveAcc = async () => {
@@ -104,13 +50,8 @@ export default function Settings() {
   const handleDelete = async () => {
     if (!deleteConfirm) return
     try {
-      if (deleteConfirm.kind === 'category') {
-        await deleteCategory(deleteConfirm.id)
-        refreshCategories()
-      } else {
-        await deleteAccount(deleteConfirm.id)
-        refreshAccounts()
-      }
+      await deleteAccount(deleteConfirm.id)
+      refreshAccounts()
       setDeleteConfirm(null)
     } catch {
       setDeleteConfirm(null)
@@ -146,9 +87,6 @@ export default function Settings() {
     navigate('/login', { replace: true })
   }
 
-  const userCategories = categories.filter((c) => c.userId)
-  const defaultCategories = categories.filter((c) => !c.userId)
-
   return (
     <PageLayout>
       {/* 헤더 카드 */}
@@ -168,83 +106,16 @@ export default function Settings() {
         </Card>
 
         {/* 카테고리 관리 */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden !p-0">
           <button
-            onClick={() => setOpenSection(openSection === 'cat' ? null : 'cat')}
+            onClick={() => navigate('/settings/categories')}
             className="w-full flex items-center justify-between px-4 py-3.5"
           >
             <span className="text-sm font-semibold text-gray-800">카테고리 관리</span>
-            <svg
-              className={`w-4 h-4 text-gray-400 transition-transform ${openSection === 'cat' ? 'rotate-90' : ''}`}
-              fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </button>
-
-          {openSection === 'cat' && (
-            <div className="border-t border-gray-50">
-              {/* 기본 카테고리 */}
-              {defaultCategories.length > 0 && (
-                <div className="px-4 py-2">
-                  <p className="text-xs text-gray-400 mb-2">기본 카테고리</p>
-                  <div className="flex flex-wrap gap-2">
-                    {defaultCategories.map((cat) => (
-                      <span
-                        key={cat.id}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-[#F5F3F0] text-gray-500"
-                      >
-                        {cat.icon} {cat.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* 내 카테고리 */}
-              <div className="px-4 py-2">
-                <p className="text-xs text-gray-400 mb-2">내 카테고리</p>
-                {userCategories.length === 0 ? (
-                  <p className="text-xs text-gray-300 mb-2">추가된 카테고리가 없습니다.</p>
-                ) : (
-                  <div className="flex flex-col gap-1 mb-2">
-                    {userCategories.map((cat) => (
-                      <div key={cat.id} className="flex items-center justify-between py-1.5">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-sm"
-                            style={{ backgroundColor: `${cat.color}20` }}
-                          >
-                            {cat.icon}
-                          </span>
-                          <span className="text-sm text-gray-800">{cat.name}</span>
-                          <span className="text-xs text-gray-400">{cat.type === 'income' ? '수입' : cat.type === 'expense' ? '지출' : '공통'}</span>
-                        </div>
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => { setEditCat(cat); setCatForm({ name: cat.name, type: cat.type, icon: cat.icon, color: cat.color }); setCatSheet(true) }}
-                            className="text-xs text-primary"
-                          >수정</button>
-                          <button
-                            onClick={() => setDeleteConfirm({ kind: 'category', id: cat.id, name: cat.name })}
-                            className="text-xs text-gray-400"
-                          >삭제</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <button
-                  onClick={() => { setEditCat(null); setCatForm({ name: '', type: 'expense', icon: '📦', color: '#6B7280' }); setCatSheet(true) }}
-                  className="flex items-center gap-1.5 text-sm text-primary font-medium py-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                  카테고리 추가
-                </button>
-              </div>
-            </div>
-          )}
         </Card>
 
         {/* 계좌 관리 */}
@@ -340,82 +211,6 @@ export default function Settings() {
         </Card>
       </div>
 
-      {/* 카테고리 추가/수정 바텀 시트 */}
-      <BottomSheet
-        isOpen={catSheet}
-        onClose={() => setCatSheet(false)}
-        title={editCat ? '카테고리 수정' : '카테고리 추가'}
-      >
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="text-xs text-gray-500 mb-1.5 block">이름</label>
-            <input
-              type="text"
-              value={catForm.name}
-              onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
-              placeholder="카테고리 이름"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1.5 block">유형</label>
-            <div className="flex gap-2">
-              {[['expense', '지출'], ['income', '수입'], ['both', '공통']].map(([v, l]) => (
-                <button
-                  key={v}
-                  onClick={() => setCatForm({ ...catForm, type: v })}
-                  className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${
-                    catForm.type === v ? 'border-primary bg-primary/5 text-primary font-medium' : 'border-gray-200 text-gray-500'
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1.5 block">
-              아이콘 <span className="text-gray-400">— 현재: {catForm.icon}</span>
-            </label>
-            <div className="grid grid-cols-8 gap-1.5 max-h-52 overflow-y-auto pr-1">
-              {ICONS.map((icon, i) => (
-                <button
-                  key={`${icon}-${i}`}
-                  onClick={() => setCatForm({ ...catForm, icon })}
-                  className={`h-10 rounded-xl text-xl flex items-center justify-center transition-colors ${
-                    catForm.icon === icon ? 'bg-primary/10 ring-1 ring-primary' : 'bg-[#F5F3F0]'
-                  }`}
-                >
-                  {icon}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1.5 block">색상</label>
-            <div className="flex flex-wrap gap-2">
-              {COLORS.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setCatForm({ ...catForm, color })}
-                  className={`w-8 h-8 rounded-full transition-transform ${
-                    catForm.color === color ? 'scale-125 ring-2 ring-offset-1 ring-gray-400' : ''
-                  }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-          </div>
-          <button
-            onClick={saveCat}
-            disabled={saving || !catForm.name.trim()}
-            className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold disabled:opacity-40"
-          >
-            {saving ? '저장 중...' : '저장'}
-          </button>
-        </div>
-      </BottomSheet>
-
       {/* 계좌 추가/수정 바텀 시트 */}
       <BottomSheet
         isOpen={accSheet}
@@ -469,14 +264,8 @@ export default function Settings() {
               <span className="font-medium text-gray-800">&quot;{deleteConfirm.name}&quot;</span>을(를) 삭제하시겠습니까?
             </p>
             <div className="flex gap-2">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600"
-              >취소</button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 py-2.5 rounded-xl bg-expense text-white text-sm font-semibold"
-              >삭제</button>
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600">취소</button>
+              <button onClick={handleDelete} className="flex-1 py-2.5 rounded-xl bg-expense text-white text-sm font-semibold">삭제</button>
             </div>
           </div>
         </div>

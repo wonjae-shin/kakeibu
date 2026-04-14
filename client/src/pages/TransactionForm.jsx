@@ -29,6 +29,7 @@ export default function TransactionForm() {
   const [categories, setCategories] = useState([])
   const [accounts, setAccounts] = useState([])
   const [catSheet, setCatSheet] = useState(false)
+  const [catParent, setCatParent] = useState(null) // 2단계 선택 시 부모 카테고리
   const [accSheet, setAccSheet] = useState(false)
   const [amountSheet, setAmountSheet] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -70,9 +71,18 @@ export default function TransactionForm() {
 
   const selectedCategory = categories.find((c) => c.id === categoryId)
   const selectedAccount = accounts.find((a) => a.id === accountId)
-  const filteredCategories = categories.filter(
-    (c) => c.type === type || c.type === 'both'
+
+  // 숨겨지지 않은 카테고리만
+  const visibleCategories = categories.filter((c) => !c.hidden)
+  // 타입에 맞는 최상위 카테고리
+  const filteredTopCategories = visibleCategories.filter(
+    (c) => !c.parentId && (c.type === type || c.type === 'both')
   )
+  // 특정 부모의 소분류
+  const subCategoriesOf = (parentId) =>
+    visibleCategories.filter((c) => c.parentId === parentId && (c.type === type || c.type === 'both'))
+
+  const openCatSheet = () => { setCatParent(null); setCatSheet(true) }
 
   const handleSave = async () => {
     if (amount === 0) return setError('금액을 입력해주세요.')
@@ -139,7 +149,7 @@ export default function TransactionForm() {
 
         {/* 카테고리 */}
         <button
-          onClick={() => setCatSheet(true)}
+          onClick={openCatSheet}
           className="w-full flex items-center justify-between px-4 py-4"
         >
           <span className="text-sm text-gray-500">카테고리</span>
@@ -153,7 +163,9 @@ export default function TransactionForm() {
                   {selectedCategory.icon}
                 </span>
                 <span className="text-sm font-medium text-gray-900">
-                  {selectedCategory.name}
+                  {selectedCategory.parentId
+                    ? `${categories.find((c) => c.id === selectedCategory.parentId)?.name} › ${selectedCategory.name}`
+                    : selectedCategory.name}
                 </span>
               </>
             )}
@@ -257,25 +269,93 @@ export default function TransactionForm() {
       </BottomSheet>
 
       {/* 카테고리 선택 바텀 시트 */}
-      <BottomSheet isOpen={catSheet} onClose={() => setCatSheet(false)} title="카테고리 선택">
-        <div className="grid grid-cols-4 gap-3">
-          {filteredCategories.map((cat) => (
+      <BottomSheet
+        isOpen={catSheet}
+        onClose={() => { setCatSheet(false); setCatParent(null) }}
+        title={catParent ? catParent.name : '카테고리 선택'}
+      >
+        {/* 카테고리 관리 버튼 — 최상단 */}
+        <button
+          onClick={() => { setCatSheet(false); setCatParent(null); navigate('/settings/categories') }}
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-colors mb-3"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+          카테고리 관리
+        </button>
+        {catParent ? (
+          /* 2단계: 소분류 선택 */
+          <div>
             <button
-              key={cat.id}
-              onClick={() => { setCategoryId(cat.id); setCatSheet(false) }}
-              className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-colors ${categoryId === cat.id ? 'bg-primary/10 ring-1 ring-primary' : ''
-                }`}
+              onClick={() => setCatParent(null)}
+              className="flex items-center gap-1.5 text-sm text-gray-500 mb-3"
             >
-              <span
-                className="w-12 h-12 rounded-full flex items-center justify-center text-xl"
-                style={{ backgroundColor: `${cat.color}20` }}
-              >
-                {cat.icon}
-              </span>
-              <span className="text-xs text-gray-700 text-center leading-tight">{cat.name}</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              전체 카테고리
             </button>
-          ))}
-        </div>
+            <div className="grid grid-cols-5 gap-1.5">
+              {/* 부모 카테고리 자체도 선택 가능 */}
+              <button
+                onClick={() => { setCategoryId(catParent.id); setCatSheet(false); setCatParent(null) }}
+                className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-colors ${categoryId === catParent.id ? 'bg-primary/10 ring-1 ring-primary' : 'bg-[#F5F3F0]'}`}
+              >
+                <span className="w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${catParent.color}20` }}>
+                  {catParent.icon}
+                </span>
+                <span className="text-[10px] text-gray-500 text-center leading-tight w-full truncate">전체</span>
+              </button>
+              {subCategoriesOf(catParent.id).map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => { setCategoryId(sub.id); setCatSheet(false); setCatParent(null) }}
+                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-colors ${categoryId === sub.id ? 'bg-primary/10 ring-1 ring-primary' : ''}`}
+                >
+                  <span className="w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${sub.color}20` }}>
+                    {sub.icon}
+                  </span>
+                  <span className="text-[10px] text-gray-700 text-center leading-tight w-full truncate">{sub.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* 1단계: 상위 카테고리 선택 */
+          <div className="grid grid-cols-5 gap-1.5">
+            {filteredTopCategories.map((cat) => {
+              const hasSubs = subCategoriesOf(cat.id).length > 0
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    if (hasSubs) {
+                      setCatParent(cat)
+                    } else {
+                      setCategoryId(cat.id)
+                      setCatSheet(false)
+                    }
+                  }}
+                  className={`relative flex flex-col items-center gap-1 p-1.5 rounded-xl transition-colors ${categoryId === cat.id || (hasSubs && subCategoriesOf(cat.id).some((s) => s.id === categoryId)) ? 'bg-primary/10 ring-1 ring-primary' : ''}`}
+                >
+                  <span className="w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${cat.color}20` }}>
+                    {cat.icon}
+                  </span>
+                  <span className="text-[10px] text-gray-700 text-center leading-tight w-full truncate">{cat.name}</span>
+                  {hasSubs && (
+                    <span className="absolute top-1 right-1 text-gray-400">
+                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </BottomSheet>
 
       {/* 계좌 선택 바텀 시트 */}

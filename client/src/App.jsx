@@ -15,6 +15,7 @@ import Transactions from '@/pages/Transactions.jsx'
 import TransactionForm from '@/pages/TransactionForm.jsx'
 import Statistics from '@/pages/Statistics.jsx'
 import Settings from '@/pages/Settings.jsx'
+import CategorySettings from '@/pages/CategorySettings.jsx'
 import Budget from '@/pages/Budget.jsx'
 import Notifications from '@/pages/Notifications.jsx'
 
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="transactions/:id/edit" element={<TransactionForm />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="settings/categories" element={<CategorySettings />} />
           <Route path="budget" element={<Budget />} />
           <Route path="notifications" element={<Notifications />} />
         </Route>

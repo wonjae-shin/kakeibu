@@ -9,15 +9,16 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  password     String
-  createdAt    DateTime      @default(now())
-  transactions  Transaction[]
-  categories    Category[]
-  accounts      Account[]
-  budgets       Budget[]
-  notifications Notification[]
+  id               String           @id @default(cuid())
+  email            String           @unique
+  password         String
+  createdAt        DateTime         @default(now())
+  transactions     Transaction[]
+  categories       Category[]
+  accounts         Account[]
+  budgets          Budget[]
+  notifications    Notification[]
+  hiddenCategories HiddenCategory[]
 }
 
 model Transaction {
@@ -38,16 +39,30 @@ model Transaction {
 }
 
 model Category {
-  id           String        @id @default(cuid())
+  id           String           @id @default(cuid())
   name         String
-  type         String        // "income" | "expense" | "both"
+  type         String           // "income" | "expense" | "both"
   icon         String
   color        String
-  isDefault    Boolean       @default(false)
+  isDefault    Boolean          @default(false)
   userId       String?
+  parentId     String?
+  order        Int?
   transactions Transaction[]
   budgets      Budget[]
-  user         User?         @relation(fields: [userId], references: [id])
+  user         User?            @relation(fields: [userId], references: [id])
+  parent       Category?        @relation("Subcategory", fields: [parentId], references: [id])
+  children     Category[]       @relation("Subcategory")
+  hiddenBy     HiddenCategory[]
+}
+
+model HiddenCategory {
+  userId     String
+  categoryId String
+  user       User     @relation(fields: [userId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@id([userId, categoryId])
 }
 
 model Account {

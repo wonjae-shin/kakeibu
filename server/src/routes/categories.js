@@ -7,16 +7,45 @@ const prisma = new PrismaClient()
 
 router.use(authMiddleware)
 
-// GET /api/categories — 시스템 기본 + 내 카테고리
+// GET /api/categories — 시스템 기본 + 내 카테고리 (숨김 제외, hidden 플래그 포함)
 router.get('/', async (req, res) => {
   try {
+    const hidden = await prisma.hiddenCategory.findMany({
+      where: { userId: req.user.userId },
+    })
+    const hiddenIds = new Set(hidden.map((h) => h.categoryId))
+
     const categories = await prisma.category.findMany({
       where: {
         OR: [{ userId: null }, { userId: req.user.userId }],
       },
-      orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+      orderBy: [{ order: 'asc' }, { isDefault: 'desc' }, { name: 'asc' }],
     })
-    res.json({ success: true, data: categories })
+
+    const result = categories.map((c) => ({
+      ...c,
+      hidden: hiddenIds.has(c.id),
+    }))
+
+    res.json({ success: true, data: result })
+  } catch (err) {
+    res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
+  }
+})
+
+// PATCH /api/categories/reorder — 순서 일괄 저장
+router.patch('/reorder', async (req, res) => {
+  try {
+    const { items } = req.body // [{ id, order }]
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ success: false, message: '잘못된 요청입니다.' })
+    }
+    await Promise.all(
+      items.map(({ id, order }) =>
+        prisma.category.update({ where: { id }, data: { order } })
+      )
+    )
+    res.json({ success: true })
   } catch (err) {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
@@ -25,16 +54,23 @@ router.get('/', async (req, res) => {
 // POST /api/categories
 router.post('/', async (req, res) => {
   try {
-    const { name, type, icon, color } = req.body
+    const { name, type, icon, color, parentId } = req.body
     if (!name || !type || !icon || !color) {
       return res.status(400).json({ success: false, message: '모든 필드를 입력해주세요.' })
     }
     const userCatCount = await prisma.category.count({ where: { userId: req.user.userId } })
-    if (userCatCount >= 30) {
-      return res.status(400).json({ success: false, message: '카테고리는 최대 30개까지 추가할 수 있습니다.' })
+    if (userCatCount >= 50) {
+      return res.status(400).json({ success: false, message: '카테고리는 최대 50개까지 추가할 수 있습니다.' })
+    }
+    // parentId가 있으면 실제 카테고리인지 확인
+    if (parentId) {
+      const parent = await prisma.category.findUnique({ where: { id: parentId } })
+      if (!parent) return res.status(400).json({ success: false, message: '상위 카테고리를 찾을 수 없습니다.' })
+      // 소분류의 소분류는 허용하지 않음 (2뎁스만)
+      if (parent.parentId) return res.status(400).json({ success: false, message: '소분류는 2단계까지만 지원합니다.' })
     }
     const category = await prisma.category.create({
-      data: { name, type, icon, color, userId: req.user.userId },
+      data: { name, type, icon, color, userId: req.user.userId, parentId: parentId || null },
     })
     res.status(201).json({ success: true, data: category })
   } catch (err) {
@@ -46,9 +82,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const category = await prisma.category.findUnique({ where: { id: req.params.id } })
-    if (!category) {
-      return res.status(404).json({ success: false, message: '카테고리를 찾을 수 없습니다.' })
-    }
+    if (!category) return res.status(404).json({ success: false, message: '카테고리를 찾을 수 없습니다.' })
     if (category.userId !== req.user.userId) {
       return res.status(403).json({ success: false, message: '기본 카테고리는 수정할 수 없습니다.' })
     }
@@ -64,17 +98,51 @@ router.put('/:id', async (req, res) => {
 })
 
 // DELETE /api/categories/:id
+// - 내 카테고리: 실제 삭제 (소분류 포함)
+// - 기본 카테고리: 이 사용자에게 숨김 처리
 router.delete('/:id', async (req, res) => {
   try {
     const category = await prisma.category.findUnique({ where: { id: req.params.id } })
-    if (!category) {
-      return res.status(404).json({ success: false, message: '카테고리를 찾을 수 없습니다.' })
-    }
+    if (!category) return res.status(404).json({ success: false, message: '카테고리를 찾을 수 없습니다.' })
+
     if (category.userId !== req.user.userId) {
-      return res.status(403).json({ success: false, message: '기본 카테고리는 삭제할 수 없습니다.' })
+      // 기본 카테고리 → 숨김 처리
+      // 이 카테고리의 사용자 소분류도 함께 삭제
+      const userChildren = await prisma.category.findMany({
+        where: { parentId: category.id, userId: req.user.userId },
+      })
+      if (userChildren.length > 0) {
+        await prisma.category.deleteMany({
+          where: { parentId: category.id, userId: req.user.userId },
+        })
+      }
+      await prisma.hiddenCategory.upsert({
+        where: { userId_categoryId: { userId: req.user.userId, categoryId: category.id } },
+        create: { userId: req.user.userId, categoryId: category.id },
+        update: {},
+      })
+      return res.json({ success: true, message: '카테고리가 숨겨졌습니다.' })
     }
+
+    // 내 카테고리 → 소분류 먼저 삭제 후 본체 삭제
+    await prisma.category.deleteMany({ where: { parentId: category.id } })
     await prisma.category.delete({ where: { id: req.params.id } })
     res.json({ success: true, message: '카테고리가 삭제되었습니다.' })
+  } catch (err) {
+    if (err.code === 'P2003') {
+      return res.status(400).json({ success: false, message: '이 카테고리를 사용하는 거래 내역이 있어 삭제할 수 없습니다.' })
+    }
+    res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
+  }
+})
+
+// POST /api/categories/hidden/:id — 숨긴 기본 카테고리 복원
+router.post('/hidden/:id/restore', async (req, res) => {
+  try {
+    await prisma.hiddenCategory.deleteMany({
+      where: { userId: req.user.userId, categoryId: req.params.id },
+    })
+    res.json({ success: true, message: '카테고리가 복원되었습니다.' })
   } catch (err) {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }

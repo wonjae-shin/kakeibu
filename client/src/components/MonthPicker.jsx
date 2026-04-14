@@ -64,9 +64,6 @@ export default function MonthPicker({ month, onChange, light = false }) {
         <span className={`text-base font-semibold whitespace-nowrap text-center ${light ? 'text-white' : 'text-gray-900'}`}>
           {formatMonth(month)}
         </span>
-        <svg className={`w-3.5 h-3.5 ${light ? 'text-white/70' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
       </button>
 
       {/* 다음 달 */}

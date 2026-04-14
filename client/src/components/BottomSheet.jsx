@@ -29,12 +29,20 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
   }, [isOpen])
 
   const startDrag = (clientY) => {
+    // 콘텐츠가 스크롤 최상단일 때만 드래그 활성화
+    if (contentRef.current && contentRef.current.scrollTop > 0) return
     dragStartY.current = clientY
     dragging.current = true
   }
 
   const moveDrag = (clientY) => {
     if (!dragging.current) return
+    // 드래그 중 콘텐츠가 위로 올라갔으면 드래그 취소
+    if (contentRef.current && contentRef.current.scrollTop > 0) {
+      dragging.current = false
+      setTranslateY(0)
+      return
+    }
     const dy = clientY - dragStartY.current
     if (dy > 0) setTranslateY(dy)
   }
@@ -51,12 +59,16 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
   }
 
   // 터치
-  const onHandleTouchStart = (e) => startDrag(e.touches[0].clientY)
-  const onHandleTouchMove = (e) => { e.preventDefault(); moveDrag(e.touches[0].clientY) }
-  const onHandleTouchEnd = () => endDrag()
+  const onSheetTouchStart = (e) => startDrag(e.touches[0].clientY)
+  const onSheetTouchMove = (e) => {
+    if (!dragging.current) return
+    e.preventDefault()
+    moveDrag(e.touches[0].clientY)
+  }
+  const onSheetTouchEnd = () => endDrag()
 
   // 마우스 (PC 테스트용)
-  const onHandleMouseDown = (e) => {
+  const onSheetMouseDown = (e) => {
     startDrag(e.clientY)
     const onMove = (ev) => moveDrag(ev.clientY)
     const onUp = () => { endDrag(); window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
@@ -73,21 +85,19 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
 
       {/* 시트 본문 */}
       <div
-        className="relative w-full max-w-[480px] bg-white rounded-t-2xl flex flex-col"
+        className="relative w-full max-w-[480px] bg-white rounded-t-2xl flex flex-col touch-none cursor-grab active:cursor-grabbing"
         style={{
           maxHeight: '85vh',
           transform: `translateY(${translateY}px)`,
           transition: dragging.current ? 'none' : 'transform 0.25s ease',
         }}
+        onMouseDown={onSheetMouseDown}
+        onTouchStart={onSheetTouchStart}
+        onTouchMove={onSheetTouchMove}
+        onTouchEnd={onSheetTouchEnd}
       >
-        {/* 핸들 — 드래그 전용 영역 */}
-        <div
-          className="flex justify-center pt-3 pb-2 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
-          onMouseDown={onHandleMouseDown}
-          onTouchStart={onHandleTouchStart}
-          onTouchMove={onHandleTouchMove}
-          onTouchEnd={onHandleTouchEnd}
-        >
+        {/* 핸들 인디케이터 */}
+        <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
 
@@ -106,7 +116,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
         {/* 스크롤 콘텐츠 — 드래그와 완전 분리 */}
         <div
           ref={contentRef}
-          className="flex-1 min-h-0 overflow-y-auto p-4"
+          className="flex-1 min-h-0 overflow-y-auto p-4 touch-auto cursor-default"
           style={{
             overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch',
