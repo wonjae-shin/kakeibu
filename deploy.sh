@@ -25,10 +25,11 @@ echo "[3/5] 서버 의존성 설치..."
 cd $DEPLOY_DIR/server
 npm install --omit=dev
 
-# Prisma 마이그레이션
+# Prisma 마이그레이션 + 클라이언트 재생성
 echo "[4/5] DB 마이그레이션..."
 cd $DEPLOY_DIR/server
 npx prisma migrate deploy
+npx prisma generate
 
 # PM2 재시작
 echo "[5/5] 서버 재시작..."
