@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  ResponsiveContainer, Cell,
   PieChart, Pie,
 } from 'recharts'
-import { getMonthlyStats, getCategoryStats } from '@/api/stats.js'
+import { getCategoryStats } from '@/api/stats.js'
 import { getTransactionSummary } from '@/api/transactions.js'
 import MonthPicker from '@/components/MonthPicker.jsx'
 import ErrorMessage from '@/components/ErrorMessage.jsx'
@@ -13,8 +13,7 @@ import { currentMonth, formatAmount, addMonth } from '@/utils/format.js'
 
 export default function Statistics() {
   const [month, setMonth] = useState(currentMonth())
-  const year = parseInt(month.split('-')[0])
-  const [monthly, setMonthly] = useState([])
+  // const year = parseInt(month.split('-')[0]) // 월별 차트 재활성화 시 사용
   const [catStats, setCatStats] = useState({ total: 0, categories: [] })
   const [prevSummary, setPrevSummary] = useState(null)
   const [currSummary, setCurrSummary] = useState(null)
@@ -27,13 +26,11 @@ export default function Statistics() {
     setError(null)
     try {
       const prevMonth = addMonth(month, -1)
-      const [monthlyRes, catRes, currRes, prevRes] = await Promise.all([
-        getMonthlyStats(String(year)),
+      const [catRes, currRes, prevRes] = await Promise.all([
         getCategoryStats(month),
         getTransactionSummary(month),
         getTransactionSummary(prevMonth),
       ])
-      setMonthly(monthlyRes.data)
       setCatStats(catRes.data)
       setCurrSummary(currRes.data)
       setPrevSummary(prevRes.data)
@@ -42,15 +39,9 @@ export default function Statistics() {
     } finally {
       setLoading(false)
     }
-  }, [year, month])
+  }, [month])
 
   useEffect(() => { fetchData() }, [fetchData])
-
-  const barData = monthly.map((m) => ({
-    name: `${parseInt(m.month.split('-')[1])}월`,
-    수입: m.income,
-    지출: m.expense,
-  }))
 
   const expenseDiff = currSummary && prevSummary ? currSummary.expense - prevSummary.expense : null
   const incomeDiff  = currSummary && prevSummary ? currSummary.income  - prevSummary.income  : null

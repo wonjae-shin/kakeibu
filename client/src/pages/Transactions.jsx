@@ -32,7 +32,7 @@ export default function Transactions() {
     amountMax, setAmountMax,
     activeFilterCount,
     deleteTarget, setDeleteTarget, deleteTransaction,
-    groupedDates, sortedDates, income, expense,
+    groupedDates, sortedDates,
     refetch
   } = useTransactions(month)
 

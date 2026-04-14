@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { formatMonth, currentMonth, addMonth } from '@/utils/format.js'
+import { formatMonth, addMonth } from '@/utils/format.js'
 
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
 
@@ -7,8 +7,6 @@ export default function MonthPicker({ month, onChange, light = false }) {
   const [open, setOpen] = useState(false)
   const [popupStyle, setPopupStyle] = useState({})
   const triggerRef = useRef(null)
-  const today = currentMonth()
-
   const currentYear = parseInt(month.split('-')[0])
   const currentMon = parseInt(month.split('-')[1])
   const [pickerYear, setPickerYear] = useState(currentYear)
