@@ -16,18 +16,30 @@ import PageLayout from '@/components/PageLayout.jsx'
 import Card from '@/components/Card.jsx'
 
 const ICONS = [
-  '🍜','🍽','🍱','🍔','🍕','🍣','🍛','🥗','🥘','🍖','🍗','🥩','🌮','🍞','🧁','🎂','🍰','🍩','🍦','🧃','🥤','☕','🧋','🍺','🍻','🥂','🍷','🍸',
-  '🚌','🚗','🚕','🚙','🚲','🛵','🏍','✈️','🚂','⛽','🛻','🚐','🛺',
-  '🛍','🛒','👔','👗','👠','👟','👜','💍','💄','🧴','🧹','🧺','🪣','🛁','🪑','🛋','🖼','🪴','🧸',
-  '🏠','🏡','🏘','🔑','🛏','🪟','💡','🔌','🪠','🔧','🔨','🪚',
-  '💊','🩺','🏥','💉','🩹','🧬','🦷','👓','🩻','🧘','🏋','🤸','🏃','🚴',
-  '🎬','🎮','🎵','🎸','🎨','📚','📖','🎭','🎪','🎠','🎯','🎲','♟','🃏','🎳','⚽','🏀','🎾','⛳','🏊','🧗','🏄','🎿','🎣',
-  '✈️','🏖','🏔','🗺','🧳','🏕','🗼','🗽','🎡','🚢','🏨',
-  '🎓','📝','✏️','🖊','📐','📏','🔬','🔭','💻','🖥','📡',
-  '🐶','🐱','🐰','🐹','🐟','🦜','🐾','🦴',
-  '🎁','🎀','🎊','🎉','💐','💒','👶','👨‍👩‍👧','🤝','🥂',
-  '💰','💵','💴','💳','🏦','📈','📊','💹','💼','🤑','👛','💸','🐷','🪙','💎',
-  '📦','🗂','📥','📤','🗑','🔖','📌','🧾','💡','⚙️','🔐','🛡','🎯','❓',
+  // 식비 (12)
+  '🍽','🍜','🍱','🍔','🍕','🍣','🥗','☕','🧋','🥤','🍺','🛒',
+  // 교통 (12)
+  '🚌','🚗','🚕','🚲','🛵','🏍','✈️','🚂','⛽','🚢','🚁','🛞',
+  // 쇼핑 (12)
+  '🛍','👔','👗','👟','👜','💄','🧴','💍','🕶️','⌚','🎒','🧢',
+  // 주거/생활 (12)
+  '🏠','🔑','🛏','💡','🔌','🧹','🧺','🪴','🛁','🪑','🛋','🔧',
+  // 의료/건강 (12)
+  '💊','🏥','🩺','🦷','🩹','🧬','🏋️','🧘','🏃','🚴','🥗','👓',
+  // 문화/여가 (12)
+  '🎬','🎮','🎵','🎸','🎨','📚','⚽','🏀','🎾','🎯','🎲','🎤',
+  // 여행 (12)
+  '🏖','🏔','🗺','🧳','🏕','🗼','🎡','🏨','🗽','🌏','🛂','📸',
+  // 교육 (12)
+  '🎓','📝','💻','📖','🔬','🔭','✏️','📐','🖥','📡','🏫','📓',
+  // 반려동물 (12)
+  '🐶','🐱','🐰','🐹','🐟','🦜','🐾','🦴','🏠','💉','🛁','🪺',
+  // 경조사/선물 (12)
+  '🎁','🎀','🎊','🎉','💐','💒','👶','🤝','🥂','🎂','💌','🪄',
+  // 수입/금융 (12)
+  '💰','💳','🏦','📈','📊','💼','👛','💸','🪙','💎','🤑','📉',
+  // 기타 (12)
+  '📦','🧾','⚙️','🔐','🛡','📌','🗂','📥','📤','💡','❓','🔖',
 ]
 const COLORS = ['#EF4444','#F97316','#F59E0B','#22C55E','#10B981','#14B8A6','#3B82F6','#6366F1','#8B5CF6','#EC4899','#6B7280','#78716C']
 const EMPTY_FORM = { name: '', type: 'expense', icon: '📦', color: '#6B7280' }
@@ -76,12 +88,19 @@ export default function CategorySettings() {
   )
 
   const [categories, setCategories] = useState([])
+  const [tab, setTab] = useState('expense')
   const [showHidden, setShowHidden] = useState(false)
+  const [showAllDefault, setShowAllDefault] = useState({ expense: false, income: false })
+  const [showAllUser, setShowAllUser] = useState({ expense: false, income: false })
+  const PREVIEW_COUNT = 5
 
   const [sheet, setSheet] = useState(false)
   const [editCat, setEditCat] = useState(null)
   const [parentCat, setParentCat] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
+
+  const [expandedIds, setExpandedIds] = useState(new Set())
+  const toggleExpand = (id) => setExpandedIds((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
 
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
@@ -145,12 +164,13 @@ export default function CategorySettings() {
   }
 
   // 계층 구조
+  const byOrder = (a, b) => (a.order ?? 999) - (b.order ?? 999)
   const visible = categories.filter((c) => !c.hidden)
   const hidden = categories.filter((c) => c.hidden)
-  const topLevel = visible.filter((c) => !c.parentId)
-  const defaultTop = topLevel.filter((c) => !c.userId)
-  const userTop = topLevel.filter((c) => c.userId)
-  const childrenOf = (parentId) => visible.filter((c) => c.parentId === parentId)
+  const topLevel = visible.filter((c) => !c.parentId).sort(byOrder)
+  const defaultTop = topLevel.filter((c) => !c.userId && c.type === tab)
+  const userTop = topLevel.filter((c) => c.userId && c.type === tab)
+  const childrenOf = (parentId) => visible.filter((c) => c.parentId === parentId).sort(byOrder)
 
   // 카테고리 행 렌더링 (공통)
   const renderRow = (cat, dragHandleProps, isDefault) => {
@@ -165,6 +185,14 @@ export default function CategorySettings() {
             </span>
             <span className="text-sm text-gray-800 ml-1.5">{cat.name}</span>
             <span className="text-xs text-gray-400 ml-1">{cat.type === 'income' ? '수입' : cat.type === 'expense' ? '지출' : '공통'}</span>
+            {subs.length > 0 && (
+              <button onClick={() => toggleExpand(cat.id)} className="flex items-center gap-0.5 ml-1.5 px-1.5 py-0.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                <span className="text-xs text-gray-500">{subs.length}</span>
+                <svg className={`w-2.5 h-2.5 text-gray-400 transition-transform ${expandedIds.has(cat.id) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-3 flex-shrink-0">
             <button onClick={() => openAdd(cat)} className="text-xs text-primary">+ 소분류</button>
@@ -172,32 +200,36 @@ export default function CategorySettings() {
             <button onClick={() => confirmDelete(cat)} className="text-xs text-gray-400">{isDefault ? '숨기기' : '삭제'}</button>
           </div>
         </div>
-        {/* 소분류 */}
+        {/* 소분류 토글 */}
         {subs.length > 0 && (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, subs)}>
-            <SortableContext items={subs.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-              {subs.map((sub) => (
-                <SortableRow key={sub.id} id={sub.id}>
-                  {({ dragHandleProps: subDrag }) => (
-                    <div className="flex items-center justify-between py-2 pl-4">
-                      <div className="flex items-center gap-1">
-                        <DragHandle {...subDrag} />
-                        <span className="text-gray-300 text-xs ml-1">└</span>
-                        <span className="w-6 h-6 rounded-full flex items-center justify-center text-sm ml-1" style={{ backgroundColor: `${sub.color}20` }}>
-                          {sub.icon}
-                        </span>
-                        <span className="text-sm text-gray-700 ml-1">{sub.name}</span>
-                      </div>
-                      <div className="flex gap-3">
-                        <button onClick={() => openEdit(sub)} className="text-xs text-primary">수정</button>
-                        <button onClick={() => confirmDelete(sub)} className="text-xs text-gray-400">삭제</button>
-                      </div>
-                    </div>
-                  )}
-                </SortableRow>
-              ))}
-            </SortableContext>
-          </DndContext>
+          <>
+            {expandedIds.has(cat.id) && (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, subs)}>
+                <SortableContext items={subs.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                  {subs.map((sub) => (
+                    <SortableRow key={sub.id} id={sub.id}>
+                      {({ dragHandleProps: subDrag }) => (
+                        <div className="flex items-center justify-between py-2 pl-4">
+                          <div className="flex items-center gap-1">
+                            <DragHandle {...subDrag} />
+                            <span className="text-gray-300 text-xs ml-1">└</span>
+                            <span className="w-6 h-6 rounded-full flex items-center justify-center text-sm ml-1" style={{ backgroundColor: `${sub.color}20` }}>
+                              {sub.icon}
+                            </span>
+                            <span className="text-sm text-gray-700 ml-1">{sub.name}</span>
+                          </div>
+                          <div className="flex gap-3">
+                            <button onClick={() => openEdit(sub)} className="text-xs text-primary">수정</button>
+                            <button onClick={() => confirmDelete(sub)} className="text-xs text-gray-400">삭제</button>
+                          </div>
+                        </div>
+                      )}
+                    </SortableRow>
+                  ))}
+                </SortableContext>
+              </DndContext>
+            )}
+          </>
         )}
       </div>
     )
@@ -215,6 +247,19 @@ export default function CategorySettings() {
         <h1 className="text-base font-bold text-gray-900">카테고리 관리</h1>
       </Card>
 
+      {/* 탭 */}
+      <Card className="p-1 flex gap-1">
+        {[{ key: 'expense', label: '지출' }, { key: 'income', label: '수입' }].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${tab === key ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </Card>
+
       {/* 기본 카테고리 */}
       {defaultTop.length > 0 && (
         <Card className="px-4 py-3">
@@ -222,7 +267,7 @@ export default function CategorySettings() {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, defaultTop)}>
             <SortableContext items={defaultTop.map((c) => c.id)} strategy={verticalListSortingStrategy}>
               <div className="flex flex-col divide-y divide-gray-50">
-                {defaultTop.map((cat) => (
+                {(showAllDefault[tab] ? defaultTop : defaultTop.slice(0, PREVIEW_COUNT)).map((cat) => (
                   <SortableRow key={cat.id} id={cat.id}>
                     {({ dragHandleProps }) => renderRow(cat, dragHandleProps, true)}
                   </SortableRow>
@@ -230,6 +275,11 @@ export default function CategorySettings() {
               </div>
             </SortableContext>
           </DndContext>
+          {defaultTop.length > PREVIEW_COUNT && (
+            <button onClick={() => setShowAllDefault((v) => ({ ...v, [tab]: !v[tab] }))} className="w-full mt-2 py-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+              {showAllDefault[tab] ? '접기 ▲' : `${defaultTop.length - PREVIEW_COUNT}개 더보기 ▼`}
+            </button>
+          )}
         </Card>
       )}
 
@@ -241,8 +291,8 @@ export default function CategorySettings() {
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, userTop)}>
             <SortableContext items={userTop.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col divide-y divide-gray-50 mb-3">
-                {userTop.map((cat) => (
+              <div className="flex flex-col divide-y divide-gray-50">
+                {(showAllUser[tab] ? userTop : userTop.slice(0, PREVIEW_COUNT)).map((cat) => (
                   <SortableRow key={cat.id} id={cat.id}>
                     {({ dragHandleProps }) => renderRow(cat, dragHandleProps, false)}
                   </SortableRow>
@@ -251,7 +301,12 @@ export default function CategorySettings() {
             </SortableContext>
           </DndContext>
         )}
-        <button onClick={() => openAdd(null)} className="flex items-center gap-1.5 text-sm text-primary font-medium py-1">
+        {userTop.length > PREVIEW_COUNT && (
+          <button onClick={() => setShowAllUser((v) => ({ ...v, [tab]: !v[tab] }))} className="w-full mt-2 mb-1 py-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            {showAllUser[tab] ? '접기 ▲' : `${userTop.length - PREVIEW_COUNT}개 더보기 ▼`}
+          </button>
+        )}
+        <button onClick={() => openAdd(null)} className="flex items-center gap-1.5 text-sm text-primary font-medium py-1 mt-1">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>

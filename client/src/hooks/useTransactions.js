@@ -35,6 +35,11 @@ export default function useTransactions(month) {
     })
   }, [])
 
+  // 카테고리는 월/타입/검색과 무관하게 한 번만 로드
+  useEffect(() => {
+    getCategories().then((res) => setCategories(res.data)).catch(() => {})
+  }, [])
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -42,13 +47,8 @@ export default function useTransactions(month) {
       const params = { month }
       if (filterType !== 'all') params.type = filterType
       if (search) params.search = search
-      
-      const [txRes, catRes] = await Promise.all([
-        getTransactions(params),
-        getCategories(),
-      ])
+      const txRes = await getTransactions(params)
       setTransactions(txRes.data)
-      setCategories(catRes.data)
     } catch {
       setError('데이터를 불러오지 못했습니다.')
     } finally {
