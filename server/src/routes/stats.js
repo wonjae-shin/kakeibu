@@ -56,26 +56,49 @@ router.get('/category', async (req, res) => {
         date: { startsWith: month },
         type: 'expense',
       },
-      include: { category: true },
+      include: { category: { include: { parent: true } } },
     })
 
     const total = transactions.reduce((sum, t) => sum + t.amount, 0)
 
-    const categoryMap = {}
+    // 부모 기준으로 롤업
+    const parentMap = {}
+    const childrenMap = {}
     for (const t of transactions) {
-      const { id, name, icon, color } = t.category
-      if (!categoryMap[id]) {
-        categoryMap[id] = { categoryId: id, name, icon, color, amount: 0 }
+      const cat = t.category
+      const parent = cat.parent ?? cat
+      const parentId = parent.id
+
+      if (!parentMap[parentId]) {
+        parentMap[parentId] = { categoryId: parentId, name: parent.name, icon: parent.icon, color: parent.color, amount: 0 }
+        childrenMap[parentId] = {}
       }
-      categoryMap[id].amount += t.amount
+      parentMap[parentId].amount += t.amount
+
+      // 소분류인 경우 children에 추적
+      if (cat.parent) {
+        if (!childrenMap[parentId][cat.id]) {
+          childrenMap[parentId][cat.id] = { categoryId: cat.id, name: cat.name, icon: cat.icon, color: cat.color, amount: 0 }
+        }
+        childrenMap[parentId][cat.id].amount += t.amount
+      }
     }
 
-    const data = Object.values(categoryMap)
+    const data = Object.values(parentMap)
       .sort((a, b) => b.amount - a.amount)
-      .map((c) => ({
-        ...c,
-        ratio: total > 0 ? Math.round((c.amount / total) * 100) : 0,
-      }))
+      .map((c) => {
+        const children = Object.values(childrenMap[c.categoryId] || {})
+          .sort((a, b) => b.amount - a.amount)
+          .map((ch) => ({
+            ...ch,
+            ratio: c.amount > 0 ? Math.round((ch.amount / c.amount) * 100) : 0,
+          }))
+        return {
+          ...c,
+          ratio: total > 0 ? Math.round((c.amount / total) * 100) : 0,
+          children,
+        }
+      })
 
     res.json({ success: true, data: { total, categories: data } })
   } catch (err) {

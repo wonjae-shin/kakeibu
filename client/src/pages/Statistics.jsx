@@ -20,6 +20,7 @@ export default function Statistics() {
   const [currSummary, setCurrSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [expandedCatId, setExpandedCatId] = useState(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -51,9 +52,8 @@ export default function Statistics() {
     지출: m.expense,
   }))
 
-  const expenseDiff = currSummary && prevSummary
-    ? currSummary.expense - prevSummary.expense
-    : null
+  const expenseDiff = currSummary && prevSummary ? currSummary.expense - prevSummary.expense : null
+  const incomeDiff  = currSummary && prevSummary ? currSummary.income  - prevSummary.income  : null
 
   // 도넛 차트 색상
   const pieData = catStats.categories.map((c) => ({
@@ -78,8 +78,54 @@ export default function Statistics() {
         <ErrorMessage message={error} onRetry={fetchData} />
       ) : (
         <>
+          {/* 전월 대비 */}
+          {expenseDiff !== null && incomeDiff !== null && (
+            <Card className="p-4">
+              <h2 className="text-sm font-semibold text-gray-800 mb-3">전월 대비</h2>
+              <div className="flex gap-4">
+                {[
+                  { label: '지출', diff: expenseDiff, upBad: true },
+                  { label: '수입', diff: incomeDiff,  upBad: false },
+                ].map(({ label, diff, upBad }) => (
+                  <div key={label} className="flex items-center gap-3 flex-1">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      diff > 0 ? (upBad ? 'bg-red-50' : 'bg-green-50') : diff < 0 ? (upBad ? 'bg-green-50' : 'bg-red-50') : 'bg-[#F5F3F0]'
+                    }`}>
+                      {diff > 0 ? (
+                        <svg className={`w-5 h-5 ${upBad ? 'text-expense' : 'text-income'}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                        </svg>
+                      ) : diff < 0 ? (
+                        <svg className={`w-5 h-5 ${upBad ? 'text-income' : 'text-expense'}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-500">{label}</p>
+                      <p className={`text-base font-bold ${
+                        diff > 0 ? (upBad ? 'text-expense' : 'text-income') : diff < 0 ? (upBad ? 'text-income' : 'text-expense') : 'text-gray-500'
+                      }`}>
+                        {diff > 0 ? '+' : ''}{formatAmount(diff)}
+                      </p>
+                      <p className={`text-xs ${
+                        diff > 0 ? (upBad ? 'text-expense' : 'text-income') : diff < 0 ? (upBad ? 'text-income' : 'text-expense') : 'text-gray-400'
+                      }`}>
+                        {diff > 0 ? '증가' : diff < 0 ? '감소' : '변동 없음'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* 연간 월별 수입/지출 바 차트 */}
-          <Card className="p-4">
+          {/* <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-800">월별 수입/지출 추이</h2>
               <span className="text-xs text-gray-400">{year}년</span>
@@ -109,7 +155,7 @@ export default function Statistics() {
                 <Bar dataKey="지출" fill="#EF4444" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </Card>
+          </Card> */}
 
           {/* 지출 분석 */}
           <Card className="p-4">
@@ -147,71 +193,88 @@ export default function Statistics() {
                   </div>
                 </div>
 
-                {/* 카테고 목록 */}
+                {/* 카테고리 목록 */}
                 <div className="flex flex-col gap-2.5">
-                  {catStats.categories.map((cat) => (
-                    <div key={cat.categoryId} className="flex items-center gap-2">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                        style={{ backgroundColor: `${cat.color}20` }}
-                      >
-                        {cat.icon}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-xs text-gray-700 truncate">{cat.name}</span>
-                          <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                            <span className="text-xs text-gray-400">{cat.ratio}%</span>
-                            <span className="text-xs font-semibold text-gray-800">{formatAmount(cat.amount)}</span>
+                  {catStats.categories.map((cat) => {
+                    const isExpanded = expandedCatId === cat.categoryId
+                    const hasChildren = cat.children && cat.children.length > 0
+                    return (
+                      <div key={cat.categoryId}>
+                        <div
+                          className={`flex items-center gap-2 ${hasChildren ? 'cursor-pointer' : ''}`}
+                          onClick={() => hasChildren && setExpandedCatId(isExpanded ? null : cat.categoryId)}
+                        >
+                          <span
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0"
+                            style={{ backgroundColor: `${cat.color}20` }}
+                          >
+                            {cat.icon}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className="text-xs text-gray-700 truncate">{cat.name}</span>
+                                {hasChildren && (
+                                  <svg
+                                    className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                    fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                                <span className="text-xs text-gray-400">{cat.ratio}%</span>
+                                <span className="text-xs font-semibold text-gray-800">{formatAmount(cat.amount)}</span>
+                              </div>
+                            </div>
+                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full"
+                                style={{ width: `${cat.ratio}%`, backgroundColor: cat.color }}
+                              />
+                            </div>
                           </div>
                         </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: `${cat.ratio}%`, backgroundColor: cat.color }}
-                          />
-                        </div>
+
+                        {/* 소분류 드릴다운 */}
+                        {isExpanded && hasChildren && (
+                          <div className="mt-2 flex flex-col gap-2 pl-9">
+                            {cat.children.map((child) => (
+                              <div key={child.categoryId} className="flex items-center gap-2">
+                                <span
+                                  className="w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0"
+                                  style={{ backgroundColor: `${child.color}20` }}
+                                >
+                                  {child.icon}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    <span className="text-xs text-gray-500 truncate">{child.name}</span>
+                                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                                      <span className="text-[10px] text-gray-400">{child.ratio}%</span>
+                                      <span className="text-xs font-medium text-gray-700">{formatAmount(child.amount)}</span>
+                                    </div>
+                                  </div>
+                                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full"
+                                      style={{ width: `${child.ratio}%`, backgroundColor: child.color }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </>
             )}
           </Card>
 
-          {/* 전월 대비 */}
-          {expenseDiff !== null && (
-            <Card className="p-4">
-              <h2 className="text-sm font-semibold text-gray-800 mb-3">전월 대비</h2>
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    expenseDiff > 0 ? 'bg-red-50' : expenseDiff < 0 ? 'bg-green-50' : 'bg-[#F5F3F0]'
-                  }`}
-                >
-                  {expenseDiff > 0 ? (
-                    <svg className="w-5 h-5 text-expense" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-                    </svg>
-                  ) : expenseDiff < 0 ? (
-                    <svg className="w-5 h-5 text-income" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                    </svg>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">지출</p>
-                  <p className={`text-base font-bold ${expenseDiff > 0 ? 'text-expense' : expenseDiff < 0 ? 'text-income' : 'text-gray-500'}`}>
-                    {expenseDiff > 0 ? '+' : ''}{formatAmount(expenseDiff)} {expenseDiff > 0 ? '증가' : expenseDiff < 0 ? '감소' : '변동 없음'}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
         </>
       )}
     </PageLayout>
