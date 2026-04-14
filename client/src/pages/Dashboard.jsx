@@ -73,8 +73,12 @@ export default function Dashboard() {
     <PageLayout>
       {/* 헤더 카드 */}
       <Card className="px-4 py-3">
-        <div className="flex items-center justify-between">
-          <MonthPicker month={month} onChange={setMonth} />
+        <div className="grid grid-cols-3 items-center">
+          <div />
+          <div className="flex justify-center">
+            <MonthPicker month={month} onChange={setMonth} />
+          </div>
+          <div className="flex justify-end">
           <button
             onClick={() => navigate('/settings')}
             className="flex items-center justify-center w-8 h-8 text-gray-500 rounded-lg bg-gray-100"
@@ -84,6 +88,7 @@ export default function Dashboard() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
+          </div>
         </div>
       </Card>
 

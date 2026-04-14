@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { formatMonth, currentMonth } from '@/utils/format.js'
+import { formatMonth, currentMonth, addMonth } from '@/utils/format.js'
 
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
 
@@ -41,30 +41,38 @@ export default function MonthPicker({ month, onChange, light = false }) {
     setOpen(true)
   }
 
+  const navBtnClass = `p-1.5 rounded-lg transition-colors ${light ? 'text-white/70 hover:bg-white/20' : 'text-gray-400 hover:bg-gray-100'}`
+  const chevron = (d) => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d={d === 'left' ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'} />
+    </svg>
+  )
+
   return (
-    <div className="relative">
-      <div className="flex items-center gap-1.5">
-        <button
-          ref={triggerRef}
-          onClick={openPicker}
-          className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors ${light ? 'hover:bg-white/20' : 'hover:bg-gray-100'}`}
-        >
-          <span className={`text-base font-semibold min-w-[80px] text-center ${light ? 'text-white' : 'text-gray-900'}`}>
-            {formatMonth(month)}
-          </span>
-          <svg className={`w-3.5 h-3.5 ${light ? 'text-white/70' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {month !== today && (
-          <button
-            onClick={() => onChange(today)}
-            className={`text-xs font-medium px-2 py-1 rounded-lg transition-colors ${light ? 'text-white bg-white/20 hover:bg-white/30' : 'text-primary bg-primary/10 hover:bg-primary/20'}`}
-          >
-            이번 달 보기
-          </button>
-        )}
-      </div>
+    <div className="relative flex items-center gap-1">
+      {/* 이전 달 */}
+      <button onClick={() => onChange(addMonth(month, -1))} className={navBtnClass}>
+        {chevron('left')}
+      </button>
+
+      {/* 월 텍스트 + 팝업 트리거 */}
+      <button
+        ref={triggerRef}
+        onClick={openPicker}
+        className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors ${light ? 'hover:bg-white/20' : 'hover:bg-gray-100'}`}
+      >
+        <span className={`text-base font-semibold whitespace-nowrap text-center ${light ? 'text-white' : 'text-gray-900'}`}>
+          {formatMonth(month)}
+        </span>
+        <svg className={`w-3.5 h-3.5 ${light ? 'text-white/70' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* 다음 달 */}
+      <button onClick={() => onChange(addMonth(month, 1))} className={navBtnClass}>
+        {chevron('right')}
+      </button>
 
       {/* 팝업 — fixed로 뷰포트 기준 위치 */}
       {open && (

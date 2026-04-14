@@ -132,11 +132,8 @@ export default function Budget() {
   return (
     <PageLayout>
       {/* 헤더 카드 */}
-      <Card className="px-4 py-3">
-        <div className="flex items-center justify-between">
-          <h1 className="text-base font-bold text-gray-900">예산</h1>
-          <MonthPicker month={month} onChange={setMonth} />
-        </div>
+      <Card className="px-4 py-3 flex justify-center">
+        <MonthPicker month={month} onChange={setMonth} />
       </Card>
 
       {loading ? (

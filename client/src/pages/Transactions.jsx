@@ -41,29 +41,34 @@ export default function Transactions() {
       {/* 헤더 카드 */}
       <div className="pt-4">
         <Card className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <MonthPicker 
-              month={month} 
-              onChange={(m) => { 
-                changeMonth(m); 
-                setFilterType('all'); 
-                setFilterCategories(new Set()); 
-              }} 
-            />
-            <button
-              onClick={() => setFilterSheet(true)}
-              className="relative flex items-center gap-1 text-sm text-gray-500 px-3 py-1.5 rounded-lg bg-gray-100"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-              </svg>
-              필터
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] rounded-full flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
+          <div className="grid grid-cols-3 items-center mb-3">
+            <div />
+            <div className="flex justify-center">
+              <MonthPicker
+                month={month}
+                onChange={(m) => {
+                  changeMonth(m);
+                  setFilterType('all');
+                  setFilterCategories(new Set());
+                }}
+              />
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setFilterSheet(true)}
+                className="relative flex items-center gap-1 text-sm text-gray-500 px-3 py-1.5 rounded-lg bg-gray-100"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                </svg>
+                필터
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* 검색 */}
@@ -122,24 +127,6 @@ export default function Transactions() {
             </div>
           ))
         )}
-      </div>
-
-      {/* 하단 월별 합계 */}
-      <div className="fixed left-0 right-0 max-w-[480px] mx-auto bg-white border-t border-gray-100 px-4 py-3 flex justify-between text-sm shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)] z-40" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
-        <div className="flex items-center gap-1.5">
-          <span className="text-gray-400">수입</span>
-          <span className="font-semibold text-income">+{formatAmount(income)}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-gray-400">지출</span>
-          <span className="font-semibold text-expense">-{formatAmount(expense)}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-gray-400">잔액</span>
-          <span className={`font-semibold ${income - expense >= 0 ? 'text-income' : 'text-expense'}`}>
-            {(income - expense) >= 0 ? '+' : ''}{formatAmount(income - expense)}
-          </span>
-        </div>
       </div>
 
       {/* 필터 바텀 시트 */}

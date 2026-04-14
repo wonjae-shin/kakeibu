@@ -30,6 +30,7 @@ export default function TransactionForm() {
   const [accounts, setAccounts] = useState([])
   const [catSheet, setCatSheet] = useState(false)
   const [accSheet, setAccSheet] = useState(false)
+  const [amountSheet, setAmountSheet] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -95,12 +96,7 @@ export default function TransactionForm() {
   }
 
   return (
-    <PageLayout className="pb-28">
-      {/* 헤더 카드 */}
-      <Card className="px-4 py-3">
-        <h1 className="text-base font-semibold text-gray-900">{isEdit ? '거래 수정' : '거래 추가'}</h1>
-      </Card>
-
+    <PageLayout>
       {/* 수입/지출 탭 */}
       <div className="flex bg-gray-100 rounded-xl p-1">
         {['expense', 'income'].map((t) => (
@@ -123,27 +119,24 @@ export default function TransactionForm() {
         ))}
       </div>
 
-      {/* 금액 + 키패드 카드 */}
-      <Card className="overflow-hidden">
-        {/* 금액 표시 */}
-        <div className="text-center py-5">
-          <span
-            className={`text-4xl font-bold ${type === 'expense' ? 'text-expense' : 'text-income'
-              }`}
-          >
-            {amount === 0 ? '0' : amount.toLocaleString()}
-          </span>
-          <span className="text-2xl font-bold text-gray-400 ml-1">원</span>
-        </div>
-
-        {/* 키패드 */}
-        <div className="pb-2">
-          <AmountInput value={amount} onChange={setAmount} />
-        </div>
-      </Card>
-
       {/* 입력 필드 카드 */}
       <Card className="overflow-hidden divide-y divide-gray-100">
+        {/* 금액 */}
+        <button
+          onClick={() => setAmountSheet(true)}
+          className="w-full flex items-center justify-between px-4 py-4"
+        >
+          <span className="text-sm text-gray-500">금액</span>
+          <div className="flex items-center gap-2">
+            <span className={`text-base font-bold ${amount === 0 ? 'text-gray-300' : type === 'expense' ? 'text-expense' : 'text-income'}`}>
+              {amount === 0 ? '0' : amount.toLocaleString()}원
+            </span>
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </button>
+
         {/* 카테고리 */}
         <button
           onClick={() => setCatSheet(true)}
@@ -235,18 +228,33 @@ export default function TransactionForm() {
         <p className="text-sm text-expense text-center py-2">{error}</p>
       )}
 
-      {/* 저장 버튼 - 항상 하단 고정 */}
-      <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 py-3 z-20"
-        style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+      {/* 저장 버튼 */}
+      <button
+        onClick={handleSave}
+        disabled={saving || amount === 0}
+        className="w-full py-4 rounded-xl bg-primary text-white font-semibold disabled:opacity-40 active:opacity-80 transition-opacity"
       >
-        <button
-          onClick={handleSave}
-          disabled={saving || amount === 0}
-          className="w-full py-4 rounded-xl bg-primary text-white font-semibold disabled:opacity-40 active:opacity-80 transition-opacity"
-        >
-          {saving ? '저장 중...' : '저장하기'}
-        </button>
-      </div>
+        {saving ? '저장 중...' : '저장하기'}
+      </button>
+
+      {/* 금액 입력 바텀 시트 */}
+      <BottomSheet isOpen={amountSheet} onClose={() => setAmountSheet(false)}>
+        <div className="pb-2">
+          <div className="text-center py-4">
+            <span className={`text-4xl font-bold ${type === 'expense' ? 'text-expense' : 'text-income'}`}>
+              {amount === 0 ? '0' : amount.toLocaleString()}
+            </span>
+            <span className="text-2xl font-bold text-gray-400 ml-1">원</span>
+          </div>
+          <AmountInput value={amount} onChange={setAmount} />
+          <button
+            onClick={() => setAmountSheet(false)}
+            className="w-full mt-4 py-3.5 rounded-xl bg-primary text-white font-semibold"
+          >
+            확인
+          </button>
+        </div>
+      </BottomSheet>
 
       {/* 카테고리 선택 바텀 시트 */}
       <BottomSheet isOpen={catSheet} onClose={() => setCatSheet(false)} title="카테고리 선택">
