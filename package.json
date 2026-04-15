@@ -1,0 +1,11 @@
+{
+  "name": "kakeibu",
+  "private": true,
+  "scripts": {
+    "test": "npm test --prefix client && npm test --prefix server",
+    "test:watch": "concurrently --names \"client,server\" --prefix-colors \"cyan,green\" \"npm run test:watch --prefix client\" \"npm run test:watch --prefix server\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
