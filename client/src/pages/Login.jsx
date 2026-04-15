@@ -1,107 +1,142 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '@/store/authStore.js'
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
+function BackIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  )
+}
+
+function Spinner() {
+  return (
+    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+  )
+}
 
 export default function Login() {
   const navigate = useNavigate()
-  const login = useAuthStore((s) => s.login)
-  const [pin, setPin] = useState('')
-  const [error, setError] = useState(false)
-  const [shake, setShake] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const anonymousLogin  = useAuthStore((s) => s.anonymousLogin)
+  const login           = useAuthStore((s) => s.login)
 
-  const handleKey = (key) => {
-    if (loading) return
-    if (key === 'del') {
-      setPin((p) => p.slice(0, -1))
-      setError(false)
-      return
-    }
-    if (key === '') return
-    if (pin.length >= 4) return
-    const next = pin + key
-    setPin(next)
-    setError(false)
-    if (next.length === 4) {
-      submitPin(next)
-    }
-  }
+  const [view, setView]         = useState('landing') // 'landing' | 'loginForm'
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
 
-  const submitPin = async (value) => {
+  useEffect(() => {
+    if (isAuthenticated) navigate('/', { replace: true })
+  }, [isAuthenticated, navigate])
+
+  // ── 바로 시작하기 ──────────────────────────────────
+  const handleAnonymousStart = async () => {
     setLoading(true)
     try {
-      await login(value)
-      navigate('/', { replace: true })
+      await anonymousLogin()
     } catch {
-      setError(true)
-      setShake(true)
-      setTimeout(() => {
-        setShake(false)
-        setPin('')
-        setError(false)
-        setLoading(false)
-      }, 600)
+      setLoading(false)
     }
   }
 
+  // ── 이메일 로그인 제출 ─────────────────────────────
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    if (!email || !password) return
+    setError('')
+    setLoading(true)
+    try {
+      await login(email, password)
+    } catch {
+      setError('이메일 또는 비밀번호가 올바르지 않습니다')
+      setLoading(false)
+    }
+  }
+
+  // ── 로그인 폼 화면 ─────────────────────────────────
+  if (view === 'loginForm') {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <button
+          onClick={() => { setView('landing'); setError(''); setEmail(''); setPassword('') }}
+          className="flex items-center gap-1 px-4 pt-14 pb-2 text-sm text-gray-500 active:opacity-70"
+          aria-label="뒤로"
+        >
+          <BackIcon />
+          뒤로
+        </button>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-8 -mt-20">
+          <div className="w-full max-w-sm">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">로그인</h2>
+            <p className="text-sm text-gray-400 mb-8">가계부 계정으로 로그인하세요</p>
+
+            <form onSubmit={handleLogin} className="space-y-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="이메일"
+                autoComplete="email"
+                required
+                className="w-full h-12 px-4 rounded-2xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:border-primary"
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호"
+                autoComplete="current-password"
+                required
+                className="w-full h-12 px-4 rounded-2xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:border-primary"
+              />
+
+              {error && (
+                <p className="text-sm text-expense px-1">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || !email || !password}
+                className="w-full h-12 mt-2 bg-primary text-white rounded-2xl text-sm font-semibold disabled:opacity-50 active:scale-95 transition-transform"
+              >
+                {loading ? <Spinner /> : '로그인'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 랜딩 화면 ──────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F3F0] select-none">
-      {/* 로고 */}
-      <div className="mb-12 text-center">
-        <div className="text-5xl mb-3">💰</div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-8">
+      <div className="mb-16 text-center">
+        <div className="text-6xl mb-4">💰</div>
         <h1 className="text-2xl font-bold text-gray-900">가계부</h1>
-        <p className="text-sm text-gray-400 mt-1">PIN을 입력해주세요</p>
+        <p className="text-sm text-gray-400 mt-2">간편하게 수입과 지출을 기록하세요</p>
       </div>
 
-      {/* PIN 도트 */}
-      <div className={`flex gap-5 mb-12 ${shake ? 'animate-shake' : ''}`}>
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
-              error
-                ? 'bg-expense border-expense'
-                : pin.length > i
-                ? 'bg-primary border-primary scale-110'
-                : 'bg-transparent border-gray-300'
-            }`}
-          />
-        ))}
-      </div>
+      <div className="w-full max-w-sm space-y-3">
+        <button
+          onClick={handleAnonymousStart}
+          disabled={loading}
+          className="w-full h-14 bg-primary text-white rounded-2xl text-base font-semibold shadow-sm active:scale-95 transition-transform disabled:opacity-60"
+        >
+          {loading ? <Spinner /> : '바로 시작하기'}
+        </button>
 
-      {/* 에러 메시지 */}
-      <div className="h-5 mb-6">
-        {error && (
-          <p className="text-sm text-expense text-center">PIN이 올바르지 않습니다</p>
-        )}
-      </div>
-
-      {/* 키패드 */}
-      <div className="grid grid-cols-3 gap-3 w-72">
-        {KEYS.map((key, i) => (
-          <button
-            key={i}
-            onClick={() => handleKey(key)}
-            disabled={key === ''}
-            className={`h-16 rounded-2xl text-2xl font-medium transition-all active:scale-95 ${
-              key === ''
-                ? 'invisible'
-                : key === 'del'
-                ? 'bg-gray-100 text-gray-500 active:bg-gray-200'
-                : 'bg-white shadow-sm text-gray-900 active:bg-gray-100'
-            }`}
-          >
-            {key === 'del' ? (
-              <span className="flex items-center justify-center">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
-                </svg>
-              </span>
-            ) : key}
-          </button>
-        ))}
+        <button
+          onClick={() => setView('loginForm')}
+          disabled={loading}
+          className="w-full h-14 bg-white text-gray-700 border border-gray-200 rounded-2xl text-base font-medium active:bg-gray-50 transition-colors disabled:opacity-60"
+        >
+          계정으로 로그인
+        </button>
       </div>
     </div>
   )

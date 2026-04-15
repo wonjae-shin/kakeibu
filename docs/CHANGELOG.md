@@ -68,3 +68,5 @@
 - 기본 인증(PIN), 계좌, 카테고리, 거래 CRUD API 구현
 - 통계 페이지, 거래 내역 필터/검색 구현
 - 다중 카테고리 필터 지원
+- 2026-04-15: chore: node_modules git 추적 제거
+- 2026-04-15: chore: 루트 package.json 추가 - client/server 통합 테스트 스크립트

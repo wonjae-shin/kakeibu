@@ -7,43 +7,104 @@ import { authMiddleware } from '../middleware/auth.js'
 const router = Router()
 const prisma = new PrismaClient()
 
-// POST /api/auth/login
+function signTokens(userId: string, isAnonymous: boolean) {
+  const accessToken = jwt.sign(
+    { userId, isAnonymous },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  )
+  const refreshToken = jwt.sign(
+    { userId },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: '7d' }
+  )
+  return { accessToken, refreshToken }
+}
+
+// POST /api/auth/anonymous — deviceId로 익명 계정 조회/생성
+router.post('/anonymous', async (req: Request, res: Response) => {
+  try {
+    const { deviceId } = req.body as { deviceId?: string }
+    if (!deviceId) {
+      res.status(400).json({ success: false, message: 'deviceId가 필요합니다.' })
+      return
+    }
+
+    let user = await prisma.user.findUnique({ where: { deviceId } })
+    if (!user) {
+      user = await prisma.user.create({
+        data: { isAnonymous: true, deviceId },
+      })
+    }
+
+    const { accessToken, refreshToken } = signTokens(user.id, user.isAnonymous)
+    res.json({ success: true, data: { accessToken, refreshToken } })
+  } catch {
+    res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
+  }
+})
+
+// POST /api/auth/login — 이메일 + 비밀번호 로그인
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { pin } = req.body as { pin?: string }
-    if (!pin) {
-      res.status(400).json({ success: false, message: 'PIN을 입력해주세요.' })
+    const { email, password } = req.body as { email?: string; password?: string }
+    if (!email || !password) {
+      res.status(400).json({ success: false, message: '이메일과 비밀번호를 입력해주세요.' })
       return
     }
 
-    const email = process.env.ADMIN_EMAIL
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user) {
-      res.status(401).json({ success: false, message: 'PIN이 올바르지 않습니다.' })
+    if (!user || !user.password) {
+      res.status(401).json({ success: false, message: '이메일 또는 비밀번호가 올바르지 않습니다.' })
       return
     }
 
-    const valid = await bcrypt.compare(pin, user.password)
+    const valid = await bcrypt.compare(password, user.password)
     if (!valid) {
-      res.status(401).json({ success: false, message: 'PIN이 올바르지 않습니다.' })
+      res.status(401).json({ success: false, message: '이메일 또는 비밀번호가 올바르지 않습니다.' })
       return
     }
 
-    const accessToken = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    )
-    const refreshToken = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: '7d' }
-    )
+    const { accessToken, refreshToken } = signTokens(user.id, false)
+    res.json({ success: true, data: { accessToken, refreshToken, email: user.email } })
+  } catch {
+    res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
+  }
+})
 
-    res.json({
-      success: true,
-      data: { accessToken, refreshToken, email: user.email },
+// POST /api/auth/register — 익명 계정을 이메일 계정으로 업그레이드
+router.post('/register', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body as { email?: string; password?: string }
+    if (!email || !password) {
+      res.status(400).json({ success: false, message: '이메일과 비밀번호를 입력해주세요.' })
+      return
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } })
+    if (!user) {
+      res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })
+      return
+    }
+    if (!user.isAnonymous) {
+      res.status(400).json({ success: false, message: '이미 등록된 계정입니다.' })
+      return
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } })
+    if (existing) {
+      res.status(409).json({ success: false, message: '이미 사용 중인 이메일입니다.' })
+      return
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { email, password: hashedPassword, isAnonymous: false, deviceId: null },
     })
+
+    const { accessToken, refreshToken } = signTokens(updated.id, false)
+    res.json({ success: true, data: { accessToken, refreshToken, email: updated.email } })
   } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
@@ -64,7 +125,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       return
     }
     const accessToken = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, isAnonymous: user.isAnonymous },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     )
@@ -84,7 +145,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: { id: true, email: true, createdAt: true },
+      select: { id: true, email: true, isAnonymous: true, createdAt: true },
     })
     if (!user) {
       res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })

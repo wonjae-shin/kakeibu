@@ -12,7 +12,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET) as {
       userId: string
-      email: string
+      isAnonymous: boolean
     }
     req.user = payload
     next()

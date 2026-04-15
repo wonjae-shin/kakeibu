@@ -8,9 +8,11 @@ import MonthPicker from '@/components/MonthPicker.jsx'
 import Card from '@/components/Card.jsx'
 import PageLayout from '@/components/PageLayout.jsx'
 import { currentMonth, formatAmount } from '@/utils/format.js'
+import useAuthStore from '@/store/authStore.js'
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const isAnonymous = useAuthStore((s) => s.isAnonymous)
   const [month, setMonth] = useState(currentMonth())
   const [summary, setSummary] = useState({ income: 0, expense: 0 })
   const [budgets, setBudgets] = useState([])
@@ -121,6 +123,23 @@ export default function Dashboard() {
           </div>
         </div>
       </Card>
+
+      {/* 익명 유저 데이터 보호 경고 배너 */}
+      {isAnonymous && (
+        <button
+          onClick={() => navigate('/settings')}
+          className="w-full flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl text-left"
+        >
+          <span className="text-lg flex-shrink-0">⚠️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-amber-800">데이터가 유실될 수 있어요</p>
+            <p className="text-xs text-amber-600 mt-0.5">캐시 삭제 시 가계부가 사라집니다. 계정을 등록해 안전하게 보관하세요.</p>
+          </div>
+          <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
 
       {/* 이번달 요약 카드 */}
       <Card className="px-4 pb-5 pt-4">

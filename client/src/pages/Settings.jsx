@@ -9,7 +9,7 @@ import Card from '@/components/Card.jsx'
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { logout } = useAuthStore()
+  const { user, isAnonymous, logout, register, login } = useAuthStore()
 
   // 섹션 토글
   const [openSection, setOpenSection] = useState(null)
@@ -22,6 +22,53 @@ export default function Settings() {
 
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { kind, id, name }
+
+  // 계정 등록 / 기존 계정 로그인 시트
+  const [authSheet, setAuthSheet] = useState(false)
+  const [authMode, setAuthMode] = useState('register') // 'register' | 'login'
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+
+  const openAuthSheet = (mode) => {
+    setAuthMode(mode)
+    setAuthEmail('')
+    setAuthPassword('')
+    setAuthError('')
+    setAuthSheet(true)
+  }
+
+  const handleRegister = async (e) => {
+    e.preventDefault()
+    if (!authEmail || !authPassword) return
+    setAuthError('')
+    setAuthLoading(true)
+    try {
+      await register(authEmail, authPassword)
+      setAuthSheet(false)
+    } catch (err) {
+      const msg = err?.response?.data?.message
+      setAuthError(msg || '계정 등록에 실패했습니다.')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleLoginFromSettings = async (e) => {
+    e.preventDefault()
+    if (!authEmail || !authPassword) return
+    setAuthError('')
+    setAuthLoading(true)
+    try {
+      await login(authEmail, authPassword)
+      setAuthSheet(false)
+    } catch {
+      setAuthError('이메일 또는 비밀번호가 올바르지 않습니다.')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
 
   useEffect(() => {
     getAccounts().then((r) => setAccounts(r.data))
@@ -96,14 +143,51 @@ export default function Settings() {
 
       <div className="flex flex-col gap-3">
         {/* 계정 */}
-        <Card className="overflow-hidden">
-          <button
-            onClick={handleLogout}
-            className="w-full px-4 py-3.5 text-left text-sm text-expense font-medium"
-          >
-            로그아웃
-          </button>
-        </Card>
+        {isAnonymous ? (
+          <Card className="overflow-hidden !p-0">
+            <div className="px-4 pt-3.5 pb-1">
+              <p className="text-xs text-gray-400 font-medium">계정</p>
+            </div>
+            <button
+              onClick={() => openAuthSheet('register')}
+              className="w-full flex items-center justify-between px-4 py-3.5 border-t border-gray-50"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-primary">계정 등록</span>
+                <span className="text-xs text-gray-400">데이터를 안전하게 보관하세요</span>
+              </div>
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => openAuthSheet('login')}
+              className="w-full px-4 py-3 border-t border-gray-50 text-left text-sm text-gray-500"
+            >
+              이미 계정이 있으신가요? <span className="text-primary font-medium">로그인</span>
+            </button>
+          </Card>
+        ) : (
+          <Card className="overflow-hidden !p-0">
+            <div className="px-4 pt-3.5 pb-1">
+              <p className="text-xs text-gray-400 font-medium">계정</p>
+            </div>
+            <div className="flex items-center justify-between px-4 py-3.5 border-t border-gray-50">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold">
+                  {user?.email?.[0]?.toUpperCase() ?? '?'}
+                </div>
+                <span className="text-sm text-gray-700">{user?.email}</span>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full px-4 py-3.5 text-left text-sm text-expense font-medium border-t border-gray-50"
+            >
+              로그아웃
+            </button>
+          </Card>
+        )}
 
         {/* 카테고리 관리 */}
         <Card className="overflow-hidden !p-0">
@@ -210,6 +294,51 @@ export default function Settings() {
           <p className="text-sm text-gray-500 mt-0.5">버전 1.0.0</p>
         </Card>
       </div>
+
+      {/* 계정 등록 / 기존 계정 로그인 바텀 시트 */}
+      <BottomSheet
+        isOpen={authSheet}
+        onClose={() => setAuthSheet(false)}
+        title={authMode === 'register' ? '계정 등록' : '기존 계정으로 로그인'}
+      >
+        <form onSubmit={authMode === 'register' ? handleRegister : handleLoginFromSettings} className="flex flex-col gap-3">
+          <input
+            type="email"
+            value={authEmail}
+            onChange={(e) => setAuthEmail(e.target.value)}
+            placeholder="이메일"
+            autoComplete="email"
+            required
+            className="w-full h-12 px-4 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:border-primary"
+          />
+          <input
+            type="password"
+            value={authPassword}
+            onChange={(e) => setAuthPassword(e.target.value)}
+            placeholder={authMode === 'register' ? '비밀번호 (8자 이상 권장)' : '비밀번호'}
+            autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+            required
+            className="w-full h-12 px-4 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:border-primary"
+          />
+          {authError && <p className="text-sm text-expense px-1">{authError}</p>}
+          <button
+            type="submit"
+            disabled={authLoading || !authEmail || !authPassword}
+            className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold disabled:opacity-40 mt-1"
+          >
+            {authLoading ? '처리 중...' : authMode === 'register' ? '계정 등록' : '로그인'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMode(authMode === 'register' ? 'login' : 'register')}
+            className="text-sm text-gray-500 text-center py-1"
+          >
+            {authMode === 'register'
+              ? '이미 계정이 있으신가요? 로그인'
+              : '계정이 없으신가요? 새로 등록'}
+          </button>
+        </form>
+      </BottomSheet>
 
       {/* 계좌 추가/수정 바텀 시트 */}
       <BottomSheet

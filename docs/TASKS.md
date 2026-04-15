@@ -169,10 +169,30 @@
 
 ---
 
+## Phase 8. Shadow Account (선 사용, 후 가입)
+
+- [x] DB 스키마 수정 — `User` 모델에 `isAnonymous`, `deviceId` 추가, `email`/`password` optional
+- [x] `prisma migrate dev` 실행 — 기존 admin 계정 `isAnonymous: false` 유지
+- [x] 백엔드 인증 API 교체
+  - [x] `POST /api/auth/anonymous` — deviceId로 익명 계정 생성/조회
+  - [x] `POST /api/auth/login` — 이메일 + 비밀번호 (PIN 로그인 제거)
+  - [x] `POST /api/auth/register` — 익명 → 등록 계정 업그레이드 (userId 유지)
+  - [x] JWT 페이로드 `{ userId, isAnonymous }` 로 변경
+- [x] 프론트엔드 인증 레이어 교체
+  - [x] `authStore.js` — `initAuth` 3분기, `anonymousLogin`, `register` 추가
+  - [x] `api/auth.js` — 신규 API 함수 반영
+  - [x] `api/instance.js` — 401 시 익명 재로그인 fallback
+- [x] 랜딩 페이지 (`Login.jsx`) — PIN 키패드 제거, "바로 시작하기" / "계정으로 로그인"
+- [x] 설정 화면 — 익명 유저: 계정 등록 / 기존 계정 로그인 BottomSheet
+- [x] 대시보드 — 익명 유저 데이터 유실 경고 배너
+- [x] 서버 테스트 18/18, 클라이언트 테스트 23/23 통과
+
+---
+
 ## 2단계 확장 (배포 준비 시)
 
-- [ ] 회원가입 API 추가
-- [ ] 회원가입 UI 추가
+- [x] 회원가입 API 추가 (Shadow Account로 구현 완료)
+- [x] 회원가입 UI 추가 (Shadow Account로 구현 완료)
 - [ ] SQLite → PostgreSQL 마이그레이션
 - [ ] 이메일 인증 추가
 - [ ] Google 소셜 로그인 (Passport.js)

@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// 응답 인터셉터 — 401 시 refresh 시도
+// 응답 인터셉터 — 401 처리
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -22,6 +22,8 @@ api.interceptors.response.use(
     const isAuthEndpoint = original.url?.startsWith('/auth/')
     if (error.response?.status === 401 && !original._retry && !isAuthEndpoint) {
       original._retry = true
+
+      // 1) refresh 토큰으로 accessToken 갱신 시도
       const refreshToken = localStorage.getItem('refreshToken')
       if (refreshToken) {
         try {
@@ -33,10 +35,23 @@ api.interceptors.response.use(
         } catch {
           localStorage.removeItem('accessToken')
           localStorage.removeItem('refreshToken')
-          window.location.href = '/login'
+        }
+      }
+
+      // 2) refresh 실패 or 없음: 익명 유저면 재로그인, 등록 유저면 랜딩으로
+      const deviceId = localStorage.getItem('deviceId')
+      if (deviceId) {
+        try {
+          const { data } = await axios.post('/api/auth/anonymous', { deviceId })
+          localStorage.setItem('accessToken', data.data.accessToken)
+          localStorage.setItem('refreshToken', data.data.refreshToken)
+          original.headers.Authorization = `Bearer ${data.data.accessToken}`
+          return api(original)
+        } catch {
+          window.location.href = '/'
         }
       } else {
-        window.location.href = '/login'
+        window.location.href = '/'
       }
     }
     return Promise.reject(error)
