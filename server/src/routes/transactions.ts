@@ -1,5 +1,5 @@
-import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { Router, Request, Response } from 'express'
+import { PrismaClient, Prisma } from '@prisma/client'
 import { authMiddleware } from '../middleware/auth.js'
 
 const router = Router()
@@ -9,18 +9,15 @@ router.use(authMiddleware)
 
 // POST /api/transactions/generate-recurring?month=YYYY-MM
 // 해당 월에 아직 복사되지 않은 isRecurring 거래를 이전 달에서 복사 생성
-router.post('/generate-recurring', async (req, res) => {
+router.post('/generate-recurring', async (req: Request, res: Response) => {
   try {
     const userId = req.user.userId
-    // month 파라미터 없으면 현재 월 사용
-    const month = req.query.month || new Date().toISOString().slice(0, 7)
+    const month = (req.query.month as string) || new Date().toISOString().slice(0, 7)
 
-    // 이전 달 계산
     const [year, mon] = month.split('-').map(Number)
     const prevDate = new Date(year, mon - 2, 1)
     const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
 
-    // 이전 달의 isRecurring 거래 조회
     const prevRecurring = await prisma.transaction.findMany({
       where: {
         userId,
@@ -30,10 +27,10 @@ router.post('/generate-recurring', async (req, res) => {
     })
 
     if (prevRecurring.length === 0) {
-      return res.json({ success: true, data: [], message: '복사할 정기 거래가 없습니다.' })
+      res.json({ success: true, data: [], message: '복사할 정기 거래가 없습니다.' })
+      return
     }
 
-    // 현재 월에 이미 생성된 정기 거래 확인 (date + categoryId + accountId + amount 조합으로 중복 방지)
     const existingRecurring = await prisma.transaction.findMany({
       where: {
         userId,
@@ -52,10 +49,10 @@ router.post('/generate-recurring', async (req, res) => {
     })
 
     if (toCreate.length === 0) {
-      return res.json({ success: true, data: [], message: '이미 생성된 정기 거래입니다.' })
+      res.json({ success: true, data: [], message: '이미 생성된 정기 거래입니다.' })
+      return
     }
 
-    // 날짜: 이전 달의 일(day)을 그대로 유지하되, 현재 월로 변경 (말일 초과 시 말일로)
     const daysInMonth = new Date(year, mon, 0).getDate()
     const created = await Promise.all(
       toCreate.map((t) => {
@@ -78,24 +75,25 @@ router.post('/generate-recurring', async (req, res) => {
     )
 
     res.json({ success: true, data: created, message: `${created.length}건의 정기 거래가 생성되었습니다.` })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })
 
 // GET /api/transactions/summary?month=YYYY-MM
-// summary는 /transactions/:id 보다 앞에 등록해야 라우팅 충돌 없음
-router.get('/summary', async (req, res) => {
+// summary는 /:id 보다 앞에 등록해야 라우팅 충돌 없음
+router.get('/summary', async (req: Request, res: Response) => {
   try {
     const { month } = req.query
     if (!month) {
-      return res.status(400).json({ success: false, message: 'month 파라미터가 필요합니다.' })
+      res.status(400).json({ success: false, message: 'month 파라미터가 필요합니다.' })
+      return
     }
 
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: req.user.userId,
-        date: { startsWith: month },
+        date: { startsWith: month as string },
       },
     })
 
@@ -110,30 +108,30 @@ router.get('/summary', async (req, res) => {
       success: true,
       data: { month, income, expense, balance: income - expense },
     })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })
 
 // GET /api/transactions?month=YYYY-MM&category=&type=
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { month, category, type, search } = req.query
-    const where = { userId: req.user.userId }
+    const where: Prisma.TransactionWhereInput = { userId: req.user.userId }
 
     if (month) {
-      where.date = { startsWith: month }
+      where.date = { startsWith: month as string }
     }
     if (category) {
-      where.categoryId = category
+      where.categoryId = category as string
     }
-    if (type && ['income', 'expense'].includes(type)) {
-      where.type = type
+    if (type && ['income', 'expense'].includes(type as string)) {
+      where.type = type as string
     }
     if (search) {
       where.OR = [
-        { memo: { contains: search } },
-        { category: { name: { contains: search } } },
+        { memo: { contains: search as string } },
+        { category: { name: { contains: search as string } } },
       ]
     }
 
@@ -147,38 +145,48 @@ router.get('/', async (req, res) => {
     })
 
     res.json({ success: true, data: transactions })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })
 
 // GET /api/transactions/:id
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const transaction = await prisma.transaction.findUnique({
       where: { id: req.params.id },
       include: { category: true, account: true },
     })
     if (!transaction || transaction.userId !== req.user.userId) {
-      return res.status(404).json({ success: false, message: '거래를 찾을 수 없습니다.' })
+      res.status(404).json({ success: false, message: '거래를 찾을 수 없습니다.' })
+      return
     }
     res.json({ success: true, data: transaction })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })
 
 // POST /api/transactions
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
-    const { type, amount, memo, date, categoryId, accountId, isRecurring } = req.body
+    const { type, amount, memo, date, categoryId, accountId, isRecurring } = req.body as {
+      type: string
+      amount: number | string
+      memo?: string
+      date: string
+      categoryId: string
+      accountId: string
+      isRecurring?: boolean
+    }
     if (!type || !amount || !date || !categoryId || !accountId) {
-      return res.status(400).json({ success: false, message: '필수 필드가 누락되었습니다.' })
+      res.status(400).json({ success: false, message: '필수 필드가 누락되었습니다.' })
+      return
     }
     const transaction = await prisma.transaction.create({
       data: {
         type,
-        amount: parseInt(amount),
+        amount: parseInt(String(amount)),
         memo,
         date,
         categoryId,
@@ -189,24 +197,33 @@ router.post('/', async (req, res) => {
       include: { category: true, account: true },
     })
     res.status(201).json({ success: true, data: transaction })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })
 
 // PUT /api/transactions/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req: Request, res: Response) => {
   try {
     const transaction = await prisma.transaction.findUnique({ where: { id: req.params.id } })
     if (!transaction || transaction.userId !== req.user.userId) {
-      return res.status(404).json({ success: false, message: '거래를 찾을 수 없습니다.' })
+      res.status(404).json({ success: false, message: '거래를 찾을 수 없습니다.' })
+      return
     }
-    const { type, amount, memo, date, categoryId, accountId, isRecurring } = req.body
+    const { type, amount, memo, date, categoryId, accountId, isRecurring } = req.body as {
+      type?: string
+      amount?: number | string
+      memo?: string
+      date?: string
+      categoryId?: string
+      accountId?: string
+      isRecurring?: boolean
+    }
     const updated = await prisma.transaction.update({
       where: { id: req.params.id },
       data: {
         type,
-        amount: amount !== undefined ? parseInt(amount) : undefined,
+        amount: amount !== undefined ? parseInt(String(amount)) : undefined,
         memo,
         date,
         categoryId,
@@ -216,21 +233,22 @@ router.put('/:id', async (req, res) => {
       include: { category: true, account: true },
     })
     res.json({ success: true, data: updated })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })
 
 // DELETE /api/transactions/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const transaction = await prisma.transaction.findUnique({ where: { id: req.params.id } })
     if (!transaction || transaction.userId !== req.user.userId) {
-      return res.status(404).json({ success: false, message: '거래를 찾을 수 없습니다.' })
+      res.status(404).json({ success: false, message: '거래를 찾을 수 없습니다.' })
+      return
     }
     await prisma.transaction.delete({ where: { id: req.params.id } })
     res.json({ success: true, message: '거래가 삭제되었습니다.' })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })

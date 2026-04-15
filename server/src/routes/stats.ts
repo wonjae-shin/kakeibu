@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Router, Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { authMiddleware } from '../middleware/auth.js'
 
@@ -7,22 +7,29 @@ const prisma = new PrismaClient()
 
 router.use(authMiddleware)
 
+interface MonthStat {
+  month: string
+  income: number
+  expense: number
+}
+
 // GET /api/stats/monthly?year=YYYY — 연간 월별 수입/지출 추이
-router.get('/monthly', async (req, res) => {
+router.get('/monthly', async (req: Request, res: Response) => {
   try {
     const { year } = req.query
     if (!year) {
-      return res.status(400).json({ success: false, message: 'year 파라미터가 필요합니다.' })
+      res.status(400).json({ success: false, message: 'year 파라미터가 필요합니다.' })
+      return
     }
 
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: req.user.userId,
-        date: { startsWith: year },
+        date: { startsWith: year as string },
       },
     })
 
-    const monthly = {}
+    const monthly: Record<string, MonthStat> = {}
     for (let m = 1; m <= 12; m++) {
       const key = `${year}-${String(m).padStart(2, '0')}`
       monthly[key] = { month: key, income: 0, expense: 0 }
@@ -37,23 +44,24 @@ router.get('/monthly', async (req, res) => {
     }
 
     res.json({ success: true, data: Object.values(monthly) })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })
 
 // GET /api/stats/category?month=YYYY-MM — 카테고리별 지출 비율
-router.get('/category', async (req, res) => {
+router.get('/category', async (req: Request, res: Response) => {
   try {
     const { month } = req.query
     if (!month) {
-      return res.status(400).json({ success: false, message: 'month 파라미터가 필요합니다.' })
+      res.status(400).json({ success: false, message: 'month 파라미터가 필요합니다.' })
+      return
     }
 
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: req.user.userId,
-        date: { startsWith: month },
+        date: { startsWith: month as string },
         type: 'expense',
       },
       include: { category: { include: { parent: true } } },
@@ -62,8 +70,9 @@ router.get('/category', async (req, res) => {
     const total = transactions.reduce((sum, t) => sum + t.amount, 0)
 
     // 부모 기준으로 롤업
-    const parentMap = {}
-    const childrenMap = {}
+    type CatEntry = { categoryId: string; name: string; icon: string; color: string; amount: number }
+    const parentMap: Record<string, CatEntry> = {}
+    const childrenMap: Record<string, Record<string, CatEntry>> = {}
     for (const t of transactions) {
       const cat = t.category
       const parent = cat.parent ?? cat
@@ -101,7 +110,7 @@ router.get('/category', async (req, res) => {
       })
 
     res.json({ success: true, data: { total, categories: data } })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   }
 })

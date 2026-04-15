@@ -1,4 +1,5 @@
 export default function ErrorMessage({ message, onRetry }) {
+  if (!message) return null
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3 px-6">
       <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">

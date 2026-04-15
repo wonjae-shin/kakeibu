@@ -20,10 +20,11 @@ cd $DEPLOY_DIR/client
 npm install --include=dev
 npm run build
 
-# 서버 의존성 설치
-echo "[3/5] 서버 의존성 설치..."
+# 서버 의존성 설치 + 빌드
+echo "[3/5] 서버 의존성 설치 및 빌드..."
 cd $DEPLOY_DIR/server
-npm install --omit=dev
+npm install
+npm run build
 
 # Prisma 마이그레이션 + 클라이언트 재생성
 echo "[4/5] DB 마이그레이션..."

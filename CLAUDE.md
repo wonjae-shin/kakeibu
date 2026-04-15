@@ -25,23 +25,25 @@
 
 ## 기술 스택 요약
 - **Frontend**: React + Vite + Tailwind CSS + Zustand + React Router
-- **Backend**: Node.js + Express + Prisma + SQLite
+- **Backend**: Node.js + Express + Prisma (TypeScript) + SQLite
 - **인증**: JWT
 - **배포**: AWS EC2 + Nginx + PM2
 
 ## 폴더 구조
-- `client/` — 프론트엔드
-- `server/` — 백엔드
+- `client/` — 프론트엔드 (React/JSX)
+- `server/` — 백엔드 (TypeScript, `src/` → `dist/` 빌드)
 - `docs/` — 설계 문서
 - `nginx/` — Nginx 설정
 
 ## 코딩 규칙
-- 언어: JavaScript (TypeScript 미사용)
+- **서버**: TypeScript (`server/src/**/*.ts`), `tsx`로 개발, `tsc`로 빌드
+- **클라이언트**: JavaScript (React/JSX)
 - 컴포넌트: 함수형 + React Hooks
 - API 응답 형식: `{ success, data, message }`
 - 에러 처리: try/catch 필수, 사용자에게 명확한 에러 메시지
 - 금액: 원 단위 정수로 저장, 표시 시 `toLocaleString()` 사용
 - 날짜: `YYYY-MM-DD` 문자열로 저장
+- 서버 import 경로: `.ts` 파일이어도 확장자는 `.js` 사용 (NodeNext 규칙)
 
 ## 현재 개발 단계
 `docs/TASKS.md`의 체크리스트 기준으로 진행.
@@ -50,7 +52,6 @@
 ## 테스트 규칙
 - 테스트 프레임워크: Vitest (client + server 공통)
 - 테스트 실행: `npm run test` (client/, server/ 각 폴더에서)
-- pre-push hook으로 lint + 테스트 자동 실행 (`.git/hooks/pre-push`)
 - 새 기능 추가 시 관련 단위 테스트 필수 작성
 - API 엔드포인트는 인증/성공/실패 케이스 모두 커버
 

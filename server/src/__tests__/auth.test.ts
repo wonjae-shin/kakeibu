@@ -1,17 +1,22 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import request from 'supertest'
-import express from 'express'
+import express, { Express } from 'express'
 import bcrypt from 'bcrypt'
 
-// 런타임에서 교체 가능한 mock 상태
-const mockState = {
+interface MockUser {
+  id: string
+  email: string
+  password: string
+}
+
+const mockState: { user: MockUser | null } = {
   user: null,
 }
 
 vi.mock('@prisma/client', () => {
   const PrismaClient = vi.fn(() => ({
     user: {
-      findUnique: vi.fn(async ({ where }) => {
+      findUnique: vi.fn(async ({ where }: { where: { email?: string } }) => {
         if (where.email === mockState.user?.email) return mockState.user
         return null
       }),
@@ -20,7 +25,7 @@ vi.mock('@prisma/client', () => {
   return { PrismaClient }
 })
 
-let app
+let app: Express
 
 beforeAll(async () => {
   process.env.JWT_SECRET = 'test-secret'

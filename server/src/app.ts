@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Express } from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import path from 'path'
@@ -16,8 +16,8 @@ import { errorHandler } from './middleware/errorHandler.js'
 dotenv.config()
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const app = express()
-const PORT = process.env.PORT || 4000
+const app: Express = express()
+const PORT = parseInt(process.env.PORT ?? '4000', 10)
 
 app.use(cors())
 app.use(express.json())

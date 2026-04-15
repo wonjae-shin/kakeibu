@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getTransactionSummary, getTransactions } from '@/api/transactions.js'
 import { getBudgets } from '@/api/budgets.js'
+import { getPendingCount } from '@/api/notifications.js'
 import TransactionItem from '@/components/TransactionItem.jsx'
 import MonthPicker from '@/components/MonthPicker.jsx'
 import Card from '@/components/Card.jsx'
@@ -16,6 +17,22 @@ export default function Dashboard() {
   const [recentTx, setRecentTx] = useState([])
   const [categoryTops, setCategoryTops] = useState([])
   const [loading, setLoading] = useState(true)
+  const [pendingCount, setPendingCount] = useState(0)
+
+  const loadPendingCount = useCallback(async () => {
+    try {
+      const res = await getPendingCount()
+      setPendingCount(res.data?.count ?? 0)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    loadPendingCount()
+    window.addEventListener('focus', loadPendingCount)
+    return () => window.removeEventListener('focus', loadPendingCount)
+  }, [loadPendingCount])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -72,8 +89,37 @@ export default function Dashboard() {
   return (
     <PageLayout>
       {/* 헤더 카드 */}
-      <Card className="px-4 py-3 flex justify-center">
-        <MonthPicker month={month} onChange={setMonth} />
+      <Card className="px-4 py-3">
+        <div className="grid grid-cols-3 items-center">
+          <div />
+          <div className="flex justify-center">
+            <MonthPicker month={month} onChange={setMonth} />
+          </div>
+          <div className="flex justify-end items-center gap-2">
+            <button
+              onClick={() => navigate('/notifications')}
+              className="relative flex items-center justify-center w-8 h-8 text-gray-500 rounded-lg bg-gray-100"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {pendingCount > 9 ? '9+' : pendingCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => navigate('/settings')}
+              className="flex items-center justify-center w-8 h-8 text-gray-500 rounded-lg bg-gray-100"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </Card>
 
       {/* 이번달 요약 카드 */}

@@ -1,22 +1,26 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import request from 'supertest'
-import express from 'express'
+import express, { Express } from 'express'
 import jwt from 'jsonwebtoken'
 
-// Prisma mock
 vi.mock('@prisma/client', () => {
   const PrismaClient = vi.fn(() => ({
     transaction: {
       findMany: vi.fn(async () => []),
       findUnique: vi.fn(async () => null),
-      create: vi.fn(async ({ data }) => ({ id: 'tx-1', ...data, category: {}, account: {} })),
+      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+        id: 'tx-1',
+        ...data,
+        category: {},
+        account: {},
+      })),
     },
   }))
   return { PrismaClient }
 })
 
-let app
-let validToken
+let app: Express
+let validToken: string
 
 beforeAll(async () => {
   process.env.JWT_SECRET = 'test-secret'
@@ -64,7 +68,7 @@ describe('POST /api/transactions', () => {
     const res = await request(app)
       .post('/api/transactions')
       .set('Authorization', `Bearer ${validToken}`)
-      .send({ type: 'expense' }) // amount, date, categoryId, accountId 누락
+      .send({ type: 'expense' })
 
     expect(res.status).toBe(400)
     expect(res.body.success).toBe(false)

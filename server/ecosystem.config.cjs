@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'kakeibu-server',
-      script: 'src/app.js',
+      script: 'dist/app.js',
       cwd: '/var/www/kakeibu/server',
       instances: 1,
       autorestart: true,
