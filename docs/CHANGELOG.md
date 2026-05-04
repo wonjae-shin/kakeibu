@@ -70,3 +70,4 @@
 - 다중 카테고리 필터 지원
 - 2026-04-15: chore: node_modules git 추적 제거
 - 2026-04-15: chore: 루트 package.json 추가 - client/server 통합 테스트 스크립트
+- 2026-04-15: feat: 쉐도우 계정 추가 및 인증 개선, gitignore 정리
