@@ -10,31 +10,23 @@ DEPLOY_DIR="/var/www/kakeibu"
 echo "====== 가계부 배포 시작 ======"
 
 # 코드 업데이트
-echo "[1/5] 코드 업데이트..."
+echo "[1/4] 코드 업데이트..."
 cd $DEPLOY_DIR
 git pull origin main
 
 # 클라이언트 빌드
-echo "[2/5] 클라이언트 빌드..."
+echo "[2/4] 클라이언트 빌드..."
 cd $DEPLOY_DIR/client
 npm install --include=dev
 npm run build
 
-# 서버 의존성 설치
-echo "[3/5] 서버 의존성 설치..."
+# 서버 빌드 (Spring Boot JAR)
+echo "[3/4] 서버 빌드..."
 cd $DEPLOY_DIR/server
-npm install --include=dev
-
-# Prisma 마이그레이션 + 클라이언트 재생성 + 빌드
-echo "[4/5] DB 마이그레이션 및 서버 빌드..."
-cd $DEPLOY_DIR/server
-npx prisma migrate deploy
-npx prisma generate
-rm -rf dist
-./node_modules/.bin/tsc
+mvn clean package -DskipTests
 
 # PM2 재시작
-echo "[5/5] 서버 재시작..."
+echo "[4/4] 서버 재시작..."
 mkdir -p /var/log/kakeibu
 pm2 startOrRestart ecosystem.config.cjs --env production
 pm2 save

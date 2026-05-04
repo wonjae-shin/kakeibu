@@ -21,14 +21,15 @@
 ### Backend
 | 항목 | 기술 | 버전 |
 |---|---|---|
-| 런타임 | Node.js | 20 LTS |
-| 프레임워크 | Express | 4 |
-| ORM | Prisma | 5 |
-| DB (1단계) | SQLite | - |
+| 언어 | Java | 21 |
+| 프레임워크 | Spring Boot | 3.3 |
+| ORM | Spring Data JPA + Hibernate | 6.5 |
+| DB (1단계) | SQLite (hibernate-community-dialects) | - |
 | DB (2단계) | PostgreSQL | - |
-| 인증 | JWT (jsonwebtoken) | - |
-| 비밀번호 | bcrypt | - |
-| 환경변수 | dotenv | - |
+| 인증 | JWT (jjwt) + RefreshToken DB 저장 | 0.12.6 |
+| 비밀번호 | BCryptPasswordEncoder (기존 해시 호환) | - |
+| 빌드 | Maven | 3.9 |
+| 포트 | 8080 | - |
 
 ### 인프라
 | 항목 | 기술 |

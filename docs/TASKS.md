@@ -189,6 +189,32 @@
 
 ---
 
+## Phase 9. Spring Boot 백엔드 마이그레이션
+
+- [x] `feature/spring-boot-backend` 브랜치 생성
+- [x] `server/pom.xml` — Spring Boot 3.3, sqlite-jdbc, hibernate-community-dialects, jjwt 의존성
+- [x] `server/src/main/resources/application.properties` — SQLite 연결, ddl-auto=none, 포트 8080
+- [x] `server/src/main/resources/schema-additions.sql` — RefreshToken 테이블 CREATE IF NOT EXISTS
+- [x] 공통 인프라 — `ApiResponse<T>`, `GlobalExceptionHandler`, `JwtUtil`, `JwtAuthFilter`, `SecurityConfig`
+- [x] JPA 엔티티 9개 — User, Transaction, Category, HiddenCategory, Account, Budget, Notification, RecurringTransaction, RefreshToken
+- [x] JPA 컬럼명 전략 — PhysicalNamingStrategyStandardImpl (Prisma camelCase 보존), 예약어(`order`, `date`, `month`) backtick 이스케이프
+- [x] Repository 8개 (JpaRepository + native query 혼용)
+- [x] Auth — 익명/이메일 로그인, 계정 업그레이드, RefreshToken DB 저장/검증, 로그아웃 시 삭제
+- [x] Categories — CRUD + PATCH /reorder + DELETE(숨김/삭제 이중 동작) + POST /hidden/:id/restore, GET hidden 필드 DTO 계산
+- [x] Transactions — CRUD + summary + generate-recurring
+- [x] Accounts — CRUD
+- [x] Budgets — CRUD
+- [x] Stats — monthly(native SQL) + category(Java 롤업)
+- [x] Notifications — ingest + list + pending-count + confirm + dismiss
+- [x] `NotificationParser.java` — 한국 카드사 알림 파서 이식
+- [x] `client/vite.config.js` — 프록시 포트 4000 → 8080
+- [x] `nginx/default.conf` — proxy_pass 포트 4000 → 8080
+- [x] `server/ecosystem.config.cjs` — PM2 java -jar 실행으로 교체
+- [x] `deploy.sh` — Maven 빌드 스크립트로 교체
+- [x] JUnit 5 + MockMvc 테스트 12/12 통과 (`mvn test`)
+
+---
+
 ## 2단계 확장 (배포 준비 시)
 
 - [x] 회원가입 API 추가 (Shadow Account로 구현 완료)

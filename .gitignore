@@ -34,6 +34,7 @@ node_modules/
 /client/build/
 /server/dist/
 /server/build/
+/server/target/
 
 # Logs
 logs
